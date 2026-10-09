@@ -1,9 +1,8 @@
-import os
+
 import sqlite3
 
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATABASE_NAME = os.path.join(BASE_DIR, "student_performance.db")
+DATABASE_NAME = "student_performance.db"
 
 
 def get_connection():
