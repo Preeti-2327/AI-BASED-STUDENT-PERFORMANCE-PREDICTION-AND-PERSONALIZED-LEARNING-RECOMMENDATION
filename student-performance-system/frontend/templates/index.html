@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Student Performance Prediction</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <!-- ==========================================
+         PROFESSIONAL PROJECT HEADER
+    ========================================== -->
+
+    <div class="project-header">
+
+        <div class="ai-badge">
+            🤖 AI-POWERED SYSTEM
+        </div>
+
+        <h1>
+            AI-Based Student Performance
+            Prediction & Personalized Learning
+        </h1>
+
+        <p class="subtitle">
+            Predict student performance using Machine Learning
+            and receive personalized learning recommendations.
+        </p>
+
+    </div>
+
+
+
+    <!-- ==========================================
+         STUDENT INFORMATION CARD
+    ========================================== -->
+
+    <div class="card">
+
+        <h2>Student Information</h2>
+
+        <form id="predictionForm">
+
+
+            <!-- ================================= -->
+            <!-- 1. PERSONAL INFORMATION -->
+            <!-- ================================= -->
+
+            <h3>1. Personal Information</h3>
+
+
+            <div class="form-group">
+
+                <label>School:</label>
+
+                <select id="school" required>
+
+                    <option value="GP">
+                        Gabriel Pereira (GP)
+                    </option>
+
+                    <option value="MS">
+                        Mousinho da Silveira (MS)
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Sex:</label>
+
+                <select id="sex" required>
+
+                    <option value="F">
+                        Female
+                    </option>
+
+                    <option value="M">
+                        Male
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Age:</label>
+
+                <input
+                    type="number"
+                    id="age"
+                    min="15"
+                    max="22"
+                    value="17"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Address:</label>
+
+                <select id="address" required>
+
+                    <option value="U">
+                        Urban
+                    </option>
+
+                    <option value="R">
+                        Rural
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Family Size:</label>
+
+                <select id="famsize" required>
+
+                    <option value="GT3">
+                        Greater than 3
+                    </option>
+
+                    <option value="LE3">
+                        Less than or equal to 3
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Parent Status:</label>
+
+                <select id="Pstatus" required>
+
+                    <option value="A">
+                        Living together
+                    </option>
+
+                    <option value="T">
+                        Living apart
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <!-- ================================= -->
+            <!-- 2. FAMILY & EDUCATION -->
+            <!-- ================================= -->
+
+            <h3>2. Family & Education Background</h3>
+
+
+            <div class="form-group">
+
+                <label>Mother's Education:</label>
+
+                <select id="Medu" required>
+
+                    <option value="0">
+                        None
+                    </option>
+
+                    <option value="1">
+                        Primary Education
+                    </option>
+
+                    <option value="2">
+                        5th to 9th Grade
+                    </option>
+
+                    <option value="3">
+                        Secondary Education
+                    </option>
+
+                    <option value="4">
+                        Higher Education
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Father's Education:</label>
+
+                <select id="Fedu" required>
+
+                    <option value="0">
+                        None
+                    </option>
+
+                    <option value="1">
+                        Primary Education
+                    </option>
+
+                    <option value="2">
+                        5th to 9th Grade
+                    </option>
+
+                    <option value="3">
+                        Secondary Education
+                    </option>
+
+                    <option value="4">
+                        Higher Education
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- MOTHER'S JOB -->
+
+            <div class="form-group">
+
+                <label>Mother's Job:</label>
+
+                <select
+                    id="Mjob"
+                    required
+                    onchange="toggleOther('Mjob', 'MjobOther')"
+                >
+
+                    <option value="teacher">
+                        Teacher
+                    </option>
+
+                    <option value="health">
+                        Health
+                    </option>
+
+                    <option value="services">
+                        Services
+                    </option>
+
+                    <option value="at_home">
+                        At Home
+                    </option>
+
+                    <option value="other">
+                        Other
+                    </option>
+
+                </select>
+
+
+                <input
+                    type="text"
+                    id="MjobOther"
+                    class="other-input"
+                    placeholder="Please specify mother's job"
+                >
+
+            </div>
+
+
+            <!-- FATHER'S JOB -->
+
+            <div class="form-group">
+
+                <label>Father's Job:</label>
+
+                <select
+                    id="Fjob"
+                    required
+                    onchange="toggleOther('Fjob', 'FjobOther')"
+                >
+
+                    <option value="teacher">
+                        Teacher
+                    </option>
+
+                    <option value="health">
+                        Health
+                    </option>
+
+                    <option value="services">
+                        Services
+                    </option>
+
+                    <option value="at_home">
+                        At Home
+                    </option>
+
+                    <option value="other">
+                        Other
+                    </option>
+
+                </select>
+
+
+                <input
+                    type="text"
+                    id="FjobOther"
+                    class="other-input"
+                    placeholder="Please specify father's job"
+                >
+
+            </div>
+
+
+            <!-- GUARDIAN -->
+
+            <div class="form-group">
+
+                <label>Guardian:</label>
+
+                <select
+                    id="guardian"
+                    required
+                    onchange="toggleOther('guardian', 'guardianOther')"
+                >
+
+                    <option value="mother">
+                        Mother
+                    </option>
+
+                    <option value="father">
+                        Father
+                    </option>
+
+                    <option value="other">
+                        Other
+                    </option>
+
+                </select>
+
+
+                <input
+                    type="text"
+                    id="guardianOther"
+                    class="other-input"
+                    placeholder="Please specify guardian"
+                >
+
+            </div>
+
+
+            <!-- REASON -->
+
+            <div class="form-group">
+
+                <label>Reason for Choosing School:</label>
+
+                <select
+                    id="reason"
+                    required
+                    onchange="toggleOther('reason', 'reasonOther')"
+                >
+
+                    <option value="course">
+                        Course
+                    </option>
+
+                    <option value="home">
+                        Close to Home
+                    </option>
+
+                    <option value="reputation">
+                        School Reputation
+                    </option>
+
+                    <option value="other">
+                        Other
+                    </option>
+
+                </select>
+
+
+                <input
+                    type="text"
+                    id="reasonOther"
+                    class="other-input"
+                    placeholder="Please specify reason"
+                >
+
+            </div>
+
+
+
+            <!-- ================================= -->
+            <!-- 3. ACADEMIC INFORMATION -->
+            <!-- ================================= -->
+
+            <h3>3. Academic Information</h3>
+
+
+            <div class="form-group">
+
+                <label>Travel Time to School:</label>
+
+                <select id="traveltime" required>
+
+                    <option value="1">
+                        Less than 15 minutes
+                    </option>
+
+                    <option value="2">
+                        15 to 30 minutes
+                    </option>
+
+                    <option value="3">
+                        30 minutes to 1 hour
+                    </option>
+
+                    <option value="4">
+                        More than 1 hour
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Study Time:</label>
+
+                <select id="studytime" required>
+
+                    <option value="1">
+                        Less than 2 hours
+                    </option>
+
+                    <option value="2">
+                        2 to 5 hours
+                    </option>
+
+                    <option value="3">
+                        5 to 10 hours
+                    </option>
+
+                    <option value="4">
+                        More than 10 hours
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Previous Failures:</label>
+
+                <input
+                    type="number"
+                    id="failures"
+                    min="0"
+                    max="4"
+                    value="0"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Absences:</label>
+
+                <input
+                    type="number"
+                    id="absences"
+                    min="0"
+                    value="4"
+                    required
+                >
+
+            </div>
+
+
+
+            <!-- ================================= -->
+            <!-- 4. SUPPORT & ACTIVITIES -->
+            <!-- ================================= -->
+
+            <h3>4. Student Support & Activities</h3>
+
+
+            <div class="form-group">
+
+                <label>School Support:</label>
+
+                <select id="schoolsup" required>
+
+                    <option value="yes">
+                        Yes
+                    </option>
+
+                    <option value="no">
+                        No
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Family Support:</label>
+
+                <select id="famsup" required>
+
+                    <option value="yes">
+                        Yes
+                    </option>
+
+                    <option value="no">
+                        No
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Paid Extra Classes:</label>
+
+                <select id="paid" required>
+
+                    <option value="yes">
+                        Yes
+                    </option>
+
+                    <option value="no">
+                        No
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Extra-Curricular Activities:</label>
+
+                <select id="activities" required>
+
+                    <option value="yes">
+                        Yes
+                    </option>
+
+                    <option value="no">
+                        No
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Nursery Education:</label>
+
+                <select id="nursery" required>
+
+                    <option value="yes">
+                        Yes
+                    </option>
+
+                    <option value="no">
+                        No
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Higher Education:</label>
+
+                <select id="higher" required>
+
+                    <option value="yes">
+                        Yes
+                    </option>
+
+                    <option value="no">
+                        No
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Internet Access:</label>
+
+                <select id="internet" required>
+
+                    <option value="yes">
+                        Yes
+                    </option>
+
+                    <option value="no">
+                        No
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Romantic Relationship:</label>
+
+                <select id="romantic" required>
+
+                    <option value="yes">
+                        Yes
+                    </option>
+
+                    <option value="no">
+                        No
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <!-- ================================= -->
+            <!-- 5. LIFESTYLE -->
+            <!-- ================================= -->
+
+            <h3>5. Lifestyle Information</h3>
+
+
+            <div class="form-group">
+
+                <label>Family Relationship Quality:</label>
+
+                <select id="famrel" required>
+
+                    <option value="1">
+                        Very Bad
+                    </option>
+
+                    <option value="2">
+                        Bad
+                    </option>
+
+                    <option value="3">
+                        Average
+                    </option>
+
+                    <option value="4">
+                        Good
+                    </option>
+
+                    <option value="5">
+                        Very Good
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Free Time:</label>
+
+                <select id="freetime" required>
+
+                    <option value="1">
+                        Very Low
+                    </option>
+
+                    <option value="2">
+                        Low
+                    </option>
+
+                    <option value="3">
+                        Average
+                    </option>
+
+                    <option value="4">
+                        High
+                    </option>
+
+                    <option value="5">
+                        Very High
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Going Out:</label>
+
+                <select id="goout" required>
+
+                    <option value="1">
+                        Very Low
+                    </option>
+
+                    <option value="2">
+                        Low
+                    </option>
+
+                    <option value="3">
+                        Average
+                    </option>
+
+                    <option value="4">
+                        High
+                    </option>
+
+                    <option value="5">
+                        Very High
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Workday Alcohol Consumption:</label>
+
+                <select id="Dalc" required>
+
+                    <option value="1">
+                        Very Low
+                    </option>
+
+                    <option value="2">
+                        Low
+                    </option>
+
+                    <option value="3">
+                        Average
+                    </option>
+
+                    <option value="4">
+                        High
+                    </option>
+
+                    <option value="5">
+                        Very High
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Weekend Alcohol Consumption:</label>
+
+                <select id="Walc" required>
+
+                    <option value="1">
+                        Very Low
+                    </option>
+
+                    <option value="2">
+                        Low
+                    </option>
+
+                    <option value="3">
+                        Average
+                    </option>
+
+                    <option value="4">
+                        High
+                    </option>
+
+                    <option value="5">
+                        Very High
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Health Status:</label>
+
+                <select id="health" required>
+
+                    <option value="1">
+                        Very Bad
+                    </option>
+
+                    <option value="2">
+                        Bad
+                    </option>
+
+                    <option value="3">
+                        Average
+                    </option>
+
+                    <option value="4">
+                        Good
+                    </option>
+
+                    <option value="5">
+                        Very Good
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <!-- ================================= -->
+            <!-- PREDICT BUTTON -->
+            <!-- ================================= -->
+
+            <button type="submit">
+                🤖 Predict My Performance
+            </button>
+
+
+            <div class="loading" id="loading">
+                Analyzing student performance...
+            </div>
+
+
+        </form>
+
+    </div>
+
+
+
+    <!-- ==========================================
+         RESULT
+    ========================================== -->
+
+    <div class="result-card" id="result">
+
+        <h2>Prediction Result</h2>
+
+
+        <h3>
+            Predicted Final Grade:
+        </h3>
+
+
+        <div class="grade">
+
+            <span id="grade">
+                --
+            </span>
+
+            / 20
+
+        </div>
+
+
+        <h3>
+            Performance Level:
+        </h3>
+
+
+        <div class="level">
+
+            <span id="level">
+                --
+            </span>
+
+        </div>
+
+
+        <h3>
+            Performance Interpretation:
+        </h3>
+
+
+        <p
+            id="interpretation"
+            class="interpretation"
+        >
+            --
+        </p>
+
+
+        <h3>
+            Personalized Recommendations
+        </h3>
+
+
+        <ul id="recommendations"></ul>
+
+    </div>
+
+
+</div>
+
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+
+</body>
+
+</html>

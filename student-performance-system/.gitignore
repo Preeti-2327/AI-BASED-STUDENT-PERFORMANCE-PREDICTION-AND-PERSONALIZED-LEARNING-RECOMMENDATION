@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env
+*.db
+**/models/*.pkl
+!**/.gitkeep
+**/graphs/
+.ipynb_checkpoints/
+node_modules/

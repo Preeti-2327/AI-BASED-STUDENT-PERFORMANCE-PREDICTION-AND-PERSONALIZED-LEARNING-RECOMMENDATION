@@ -64,36 +64,29 @@ Every student learns differently. Traditional one-size-fits-all teaching often f
 
 ## 📁 Project Structure
 
+> Single project lives in `student-performance-system/`. No duplicates — ZIP, `__pycache__`, generated `.db`, Node TODO stubs and legacy broken `ml-service/app.py` removed.
+
 ```
-AI-BASED-STUDENT-PERFORMANCE-PREDICTION-AND-PERSONALIZED-LEARNING-RECOMMENDATION/
-│
-├── data/
-│   ├── raw/                  # Original dataset
-│   └── processed/            # Cleaned & preprocessed data
-│
-├── notebooks/
-│   ├── 01_EDA.ipynb          # Exploratory Data Analysis
-│   ├── 02_Preprocessing.ipynb
-│   ├── 03_Model_Training.ipynb
-│   └── 04_Recommendation.ipynb
-│
-├── src/
-│   ├── data_preprocessing.py
-│   ├── train_model.py
-│   ├── predict.py
-│   └── recommender.py
-│
-├── models/                   # Saved trained models (.pkl)
-│
-├── app/
-│   └── app.py                # Streamlit web application
-│
-├── requirements.txt
+.
 ├── README.md
-└── LICENSE
+├── .gitignore
+└── student-performance-system/
+    ├── backend/app.py, database.py
+    ├── frontend/templates/index.html, static/, admin/, student/, teacher/
+    ├── ml-service/train_model.py, predict.py, recommender.py, data_analysis.py
+    ├── data/student-mat.csv
+    ├── models/ tests/ graphs/ docs/
+    └── requirements.txt
 ```
 
-> 📝 Adjust the folder names above to match your actual repository structure.
+Run:
+```bash
+cd student-performance-system
+pip install -r requirements.txt
+python ml-service/train_model.py
+python backend/app.py
+# open http://127.0.0.1:5000
+```
 
 ---
 

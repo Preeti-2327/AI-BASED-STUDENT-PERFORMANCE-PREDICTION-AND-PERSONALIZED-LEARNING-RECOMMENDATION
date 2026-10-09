@@ -1,0 +1,3 @@
+# See student-performance-system/ — single well-structured project lives there.
+__pycache__/
+*.pyc

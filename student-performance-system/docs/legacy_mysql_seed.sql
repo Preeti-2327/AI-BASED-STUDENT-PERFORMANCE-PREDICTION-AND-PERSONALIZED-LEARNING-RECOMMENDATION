@@ -1,0 +1,1 @@
+-- Dummy data for testing (admin, teacher, students, marks)
