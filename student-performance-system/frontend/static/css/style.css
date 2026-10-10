@@ -417,3 +417,209 @@
                 font-size: 40px;
             }
         }
+
+
+        /* ==========================================
+           BRAND LOGO
+        ========================================== */
+
+        .brand-logo {
+
+            width: 56px;
+
+            height: 56px;
+
+            border-radius: 14px;
+
+            margin-bottom: 12px;
+        }
+
+
+        /* ==========================================
+           FOOTER NOTE (base layout)
+        ========================================== */
+
+        .foot {
+
+            text-align: center;
+
+            color: #6b7280;
+
+            font-size: 13px;
+
+            margin-top: 10px;
+        }
+
+
+        /* ==========================================
+           HISTORY TABLE
+        ========================================== */
+
+        .hist-bar {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            margin-bottom: 12px;
+        }
+
+
+        .muted {
+
+            color: #6b7280;
+
+            font-size: 14px;
+        }
+
+
+        .mini-btn {
+
+            width: auto;
+
+            padding: 8px 14px;
+
+            margin-top: 0;
+
+            font-size: 13px;
+        }
+
+
+        .hist-wrap {
+
+            overflow-x: auto;
+        }
+
+
+        .hist-table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            font-size: 14px;
+        }
+
+
+        .hist-table th {
+
+            text-align: left;
+
+            font-size: 11px;
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.5px;
+
+            color: #6b7280;
+
+            padding: 8px 10px;
+
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+
+        .hist-table td {
+
+            padding: 9px 10px;
+
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+
+        .hist-empty {
+
+            text-align: center;
+
+            color: #6b7280;
+        }
+
+
+        .del-btn {
+
+            width: auto;
+
+            padding: 6px 12px;
+
+            margin-top: 0;
+
+            font-size: 12px;
+
+            background: #d9534f;
+        }
+
+
+        /* ==========================================
+           ERROR PAGES + HELPERS
+        ========================================== */
+
+        .text-center {
+
+            text-align: center;
+        }
+
+
+        /* ==========================================
+           FORM ERROR (replaces alert popups)
+        ========================================== */
+
+        .form-error {
+
+            display: none;
+
+            margin-top: 15px;
+
+            padding: 12px 15px;
+
+            border-radius: 10px;
+
+            background: #fdecea;
+
+            color: #b03a36;
+
+            border: 1px solid #f5c6c3;
+
+            font-size: 14px;
+        }
+
+
+        .form-error.show {
+
+            display: block;
+        }
+
+
+        .err-page {
+
+            padding: 50px 30px;
+        }
+
+
+        .err-art {
+
+            width: 160px;
+
+            margin-bottom: 10px;
+        }
+
+
+        .btn-link {
+
+            display: inline-block;
+
+            margin-top: 18px;
+
+            padding: 12px 22px;
+
+            border-radius: 10px;
+
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+
+            color: white;
+
+            font-weight: bold;
+
+            text-decoration: none;
+        }

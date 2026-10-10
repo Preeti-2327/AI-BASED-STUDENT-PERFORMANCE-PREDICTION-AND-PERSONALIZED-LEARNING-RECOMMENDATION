@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Page Not Found · SPS{% endblock %}
+{% block content %}
+
+<div class="card text-center err-page">
+
+    <img src="{{ url_for('static', filename='images/empty.svg') }}" alt="Not found" class="err-art">
+
+    <h2>404 — Page Not Found</h2>
+
+    <p class="subtitle">
+        The page you are looking for does not exist or was moved.
+    </p>
+
+    <a href="/" class="btn-link">← Back to Prediction Home</a>
+
+</div>
+
+{% endblock %}

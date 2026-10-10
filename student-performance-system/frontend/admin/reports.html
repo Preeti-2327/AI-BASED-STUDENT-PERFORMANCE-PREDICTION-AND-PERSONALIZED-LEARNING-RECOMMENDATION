@@ -3,22 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reports</title>
+  <title>Reports · SPS Admin</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>Reports</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/guard.js"></script>
-  <script src="../js/utils.js"></script>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img class="logo-img" src="../assets/images/logo.svg" alt="SPS logo"><div><strong>SPS Admin</strong><small>Performance System</small></div></div>
+    <nav class="nav">
+      <div class="nav-label">Overview</div>
+      <a href="dashboard.html" data-page="dashboard.html"><span class="ico">📊</span> Dashboard</a>
+      <a href="reports.html" data-page="reports.html"><span class="ico">📈</span> Reports</a>
+      <div class="nav-label">Manage</div>
+      <a href="manage-students.html" data-page="manage-students.html"><span class="ico">🧑‍🎓</span> Students</a>
+      <a href="manage-teachers.html" data-page="manage-teachers.html"><span class="ico">👩‍🏫</span> Teachers</a>
+      <a href="manage-subjects.html" data-page="manage-subjects.html"><span class="ico">📚</span> Subjects</a>
+      <div class="nav-label">System</div>
+      <a href="../index.html"><span class="ico">🏠</span> View Site</a>
+      <a href="#" data-logout><span class="ico">🚪</span> Logout</a>
+    </nav>
+    <div class="side-foot">© <span id="year"></span> SPS · v1.0</div>
+  </aside>
+  <div class="main-area">
+    <div class="topbar"><button class="ghost sm menu-btn" id="menuBtn">☰</button><span class="title">Reports & Analytics</span><span class="spacer"></span><span class="badge info" id="srcBadge">…</span><div class="user-chip"><span class="avatar">A</span><span data-username>Admin</span></div></div>
+    <div class="content">
+      <div class="page-head"><div><h1>Prediction Reports</h1><p>Live ML predictions from Flask backend, with export & print.</p></div>
+        <div class="toolbar"><button class="ghost" id="printBtn">🖨 Print</button><button id="exportBtn">⬇ Export CSV</button></div></div>
+      <section class="stats" id="summaryCards">
+        <div class="stat"><div class="icon" style="background:#e8f1fd">📝</div><div><b id="cTotal">0</b><span>Total Predictions</span></div></div>
+        <div class="stat"><div class="icon" style="background:#e3f5e9">⭐</div><div><b id="cAvg">0</b><span>Average Grade / 20</span></div></div>
+        <div class="stat"><div class="icon" style="background:#fdecea">⚠️</div><div><b id="cRisk">0</b><span>At-Risk Count</span></div></div>
+        <div class="stat"><div class="icon" style="background:#fef3e2">🏆</div><div><b id="cExcel">0</b><span>Excellent Count</span></div></div>
+      </section>
+      <section class="panels">
+        <div class="panel"><header><h3>Grade Distribution</h3></header><div class="pad"><canvas class="chart" id="distChart"></canvas></div></div>
+        <div class="panel"><header><h3>Level Breakdown</h3></header><div class="pad"><canvas class="chart" id="levelChart"></canvas></div></div>
+      </section>
+      <div class="card" style="margin-bottom:14px"><div class="toolbar">
+        <div class="search"><input id="q" placeholder="Search record…"></div>
+        <select id="levelFilter" style="max-width:190px"><option value="">All levels</option><option>Excellent</option><option>Good</option><option>Average</option><option>Needs Improvement</option></select>
+        <span class="spacer"></span><button class="danger sm" id="clearBtn">Clear demo notice</button>
+      </div></div>
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>Student</th><th>Predicted</th><th>Level</th><th>Top Recommendation</th><th>When</th></tr></thead><tbody id="rows"></tbody></table></div>
+      <p class="footer-note">Tip: start backend with <code>python backend/app.py</code> then refresh — reports go live automatically.</p>
+    </div>
+  </div>
+</div>
+<script src="../js/config.js"></script><script src="../js/api.js"></script><script src="../js/guard.js"></script>
+<script src="../js/utils.js"></script><script src="../js/charts.js"></script><script src="../js/admin.js"></script>
+<script>
+requireRole(["admin"]);
+let DATA = [];
+function render() {
+  const q = document.getElementById("q").value.toLowerCase(), lf = document.getElementById("levelFilter").value;
+  const list = DATA.filter(r => (!lf || r.performance_level === lf) && (!q || JSON.stringify(r).toLowerCase().includes(q)));
+  if (!DATA.length) { document.getElementById("rows").innerHTML = `<tr><td colspan="6" class="empty">No predictions yet.<br>Run <code>python ml-service/train_model.py</code>, start <code>python backend/app.py</code>, then make a prediction.</td></tr>`; return; }
+  document.getElementById("rows").innerHTML = list.map(r => {
+    const recs = Array.isArray(r.recommendations) ? r.recommendations : [];
+    const top = recs[0] ? (typeof recs[0] === "string" ? recs[0] : (recs[0].title || recs[0].topic || JSON.stringify(recs[0]))) : "—";
+    return `<tr><td class="muted">#${r.id}</td>
+      <td><b>${escapeHtml(r.student_data?.name || r.student_data?.sex + " · " + r.student_data?.age + "y" || "Student")}</b><div class="muted" style="font-size:11px">absences: ${r.student_data?.absences ?? "-"}</div></td>
+      <td><b>${r.predicted_grade}</b> / 20</td><td>${levelBadge(r.performance_level)}</td>
+      <td style="max-width:260px">${escapeHtml(String(top).slice(0, 90))}</td><td class="muted">${fmtDate(r.created_at)}</td></tr>`;
+  }).join("") || `<tr><td colspan="6" class="empty">No matching records.</td></tr>`;
+}
+document.addEventListener("DOMContentLoaded", async () => {
+  const history = await fetchHistory();
+  const live = history.length > 0;
+  document.getElementById("srcBadge").textContent = live ? "● live backend" : "○ offline — no data";
+  document.getElementById("srcBadge").className = "badge " + (live ? "ok" : "neutral");
+  DATA = history;
+  if (live) {
+    const grades = history.map(h => h.predicted_grade);
+    document.getElementById("cTotal").textContent = history.length;
+    document.getElementById("cAvg").textContent = (grades.reduce((a, b) => a + b, 0) / grades.length).toFixed(1);
+    document.getElementById("cRisk").textContent = history.filter(h => h.performance_level === "Needs Improvement").length;
+    document.getElementById("cExcel").textContent = history.filter(h => h.performance_level === "Excellent").length;
+    const levels = ["Needs Improvement", "Average", "Good", "Excellent"];
+    drawBarChart(document.getElementById("distChart"), ["At Risk", "Average", "Good", "Excel."], levels.map(l => history.filter(h => h.performance_level === l).length));
+    drawDonut(document.getElementById("levelChart"), [
+      { label: "Excellent", value: history.filter(h => h.performance_level === "Excellent").length, color: "#28a745" },
+      { label: "Good", value: history.filter(h => h.performance_level === "Good").length, color: "#2c7be5" },
+      { label: "Average", value: history.filter(h => h.performance_level === "Average").length, color: "#f0ad4e" },
+      { label: "At Risk", value: history.filter(h => h.performance_level === "Needs Improvement").length, color: "#d9534f" },
+    ]);
+  }
+  render();
+  document.getElementById("q").addEventListener("input", render);
+  document.getElementById("levelFilter").addEventListener("input", render);
+  document.getElementById("clearBtn").onclick = () => toast("Backend data is read-only — delete from API if needed");
+  document.getElementById("exportBtn").onclick = () => downloadCSV("prediction-reports.csv", DATA.map(r => ({ id: r.id, grade: r.predicted_grade, level: r.performance_level, created_at: r.created_at })));
+  document.getElementById("printBtn").onclick = () => window.print();
+});
+</script>
 </body>
 </html>

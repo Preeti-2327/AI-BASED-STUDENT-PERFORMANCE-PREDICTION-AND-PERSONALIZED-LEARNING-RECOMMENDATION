@@ -3,22 +3,150 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home</title>
+  <title>EduPulse · AI Student Performance Prediction & Personalized Learning</title>
+  <meta name="description" content="Predict student grades early, flag at-risk learners, and deliver personalized study recommendations — for admins, teachers and students.">
+  <meta name="theme-color" content="#1f3a5f">
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/auth.css">
   <link rel="stylesheet" href="css/dashboard.css">
   <link rel="stylesheet" href="css/responsive.css">
+  <style>
+    .landing { max-width: 1180px; margin: 0 auto; padding: 0 22px; }
+    .topbar-landing { position: sticky; top: 0; z-index: 60; background: rgba(255,255,255,.92); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+    .topbar-landing .inner { max-width: 1180px; margin: 0 auto; padding: 12px 22px; display: flex; align-items: center; gap: 14px; }
+    .brand-lockup { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--primary); }
+    .brand-lockup img { width: 34px; height: 34px; border-radius: 9px; }
+    .brand-lockup small { display: block; font-size: 11px; color: var(--muted); font-weight: 600; }
+    .nav-links { display: flex; gap: 18px; margin-left: 28px; font-size: 13.5px; font-weight: 600; }
+    .nav-links a { color: var(--primary); }
+    .trustbar { display: flex; gap: 26px; flex-wrap: wrap; margin: 18px 0 0; color: var(--muted); font-size: 12.5px; font-weight: 600; }
+    .trustbar b { color: var(--primary); }
+    .section { padding: 44px 0 8px; }
+    .section h2 { font-size: 24px; color: var(--primary); margin-bottom: 6px; }
+    .section > p { color: var(--muted); max-width: 640px; margin-bottom: 18px; }
+    .steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+    .step-num { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 800; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+    .roles { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+    .cta-band { background: linear-gradient(160deg, var(--primary), var(--primary-dark)); color: #fff; border-radius: 16px; padding: 40px; display: flex; gap: 24px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin: 44px 0 10px; }
+    .cta-band h2 { color: #fff; margin-bottom: 6px; }
+    .cta-band p { color: #9db1cc; margin: 0; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(44,123,229,.14); color: #9dc2f5; border: 1px solid rgba(125,179,247,.35); font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 20px; margin-bottom: 14px; }
+    @media (max-width: 768px) { .nav-links { display: none; } .steps, .roles { grid-template-columns: 1fr; } .cta-band { padding: 28px 22px; } }
+  </style>
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>Home</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
+  <div class="topbar-landing">
+    <div class="inner">
+      <a href="index.html" class="brand-lockup" aria-label="EduPulse home">
+        <img src="assets/images/logo.svg" alt="EduPulse logo">
+        <span>EduPulse<small>Student Performance System</small></span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="#roles">Roles</a>
+        <a href="#security">Security</a>
+      </nav>
+      <span style="flex:1"></span>
+      <a href="login.html" class="muted" style="font-weight:700;font-size:13.5px">Log in</a>
+      <button onclick="location.href='register.html'">Get started</button>
+    </div>
+  </div>
+
+  <div class="landing">
+    <nav class="site-nav" aria-label="Breadcrumb" style="margin-bottom:0">
+      <span class="badge info">● System online</span>
+      <span class="muted" style="font-size:12.5px">ML predictions · At-risk alerts · Study recommendations</span>
+    </nav>
+
+    <header class="hero">
+      <div>
+        <span class="pill">✦ AI-powered · Built for schools & colleges</span>
+        <h1>Predict performance <span>before results day.</span></h1>
+        <p>EduPulse forecasts final grades (0–20 scale) from study habits and past scores, flags at-risk students early, and generates personalized next-step recommendations for every learner.</p>
+        <div class="hero-cta">
+          <button onclick="location.href='register.html'">Start free →</button>
+          <button class="ghost" onclick="location.href='login.html'">Live demo login</button>
+        </div>
+        <div class="trustbar" aria-label="Key metrics">
+          <span><b>30+</b> input signals</span>
+          <span><b>4</b> performance levels</span>
+          <span><b>3</b> role-based portals</span>
+          <span><b>100%</b> responsive</span>
+        </div>
+      </div>
+      <div>
+        <img class="hero-art" src="assets/images/hero.svg" alt="Dashboard illustration showing predictions, grades and progress charts">
+      </div>
+    </header>
+
+    <section class="section" id="features">
+      <h2>Everything you need to lift outcomes</h2>
+      <p>One platform for the full loop — data in, prediction out, action taken. No spreadsheets, no guesswork.</p>
+      <div class="feature-grid">
+        <div class="card"><h3>🔮 Grade prediction</h3><p>ML model predicts G3 final grades with confidence bands and plain-English interpretation.</p></div>
+        <div class="card"><h3>🚨 At-risk detection</h3><p>Automatic flags for Needs Improvement & Average students with contact tracking.</p></div>
+        <div class="card"><h3>🎯 Personalized tips</h3><p>Study-time, attendance and habit-based recommendations per student, not generic advice.</p></div>
+        <div class="card"><h3>📝 Marks management</h3><p>Teachers add G1/G2 marks, bulk import, and track history with one-click CSV export.</p></div>
+        <div class="card"><h3>📊 Role dashboards</h3><p>Dedicated admin, teacher and student workspaces with trends, leaderboards and reports.</p></div>
+        <div class="card"><h3>🔒 Private by design</h3><p>Role-based access, session guards and local-first demo mode. Your data stays yours.</p></div>
+      </div>
+    </section>
+
+    <section class="section" id="how">
+      <h2>From data to action in 3 steps</h2>
+      <p>Designed for real classrooms — a teacher can go from signup to first prediction in under five minutes.</p>
+      <div class="steps">
+        <div class="card"><span class="step-num">1</span><h3 style="font-size:15px;color:var(--primary);margin-bottom:6px">Add student context</h3><p class="muted" style="font-size:13px">Enter study hours, failures, absences, health and prior grades (G1/G2) — or import in bulk.</p></div>
+        <div class="card"><span class="step-num">2</span><h3 style="font-size:15px;color:var(--primary);margin-bottom:6px">Run AI prediction</h3><p class="muted" style="font-size:13px">Get predicted G3, performance level and the top factors driving the result.</p></div>
+        <div class="card"><span class="step-num">3</span><h3 style="font-size:15px;color:var(--primary);margin-bottom:6px">Act & track</h3><p class="muted" style="font-size:13px">Assign study plans, contact at-risk learners, and watch trends improve over time.</p></div>
+      </div>
+    </section>
+
+    <section class="section" id="roles">
+      <h2>Built for every role</h2>
+      <p>Each portal shows only what that role needs — nothing more, nothing confusing.</p>
+      <div class="roles">
+        <div class="card"><h3>🎓 Students</h3><p class="muted" style="font-size:13px;margin:6px 0 12px">My marks, predictions, study habits and recommendations in one calm dashboard.</p><button class="ghost sm" onclick="location.href='register.html'">Join as student</button></div>
+        <div class="card"><h3>👩‍🏫 Teachers</h3><p class="muted" style="font-size:13px;margin:6px 0 12px">Class overview, at-risk list, add-marks and attendance — with CSV export.</p><button class="ghost sm" onclick="location.href='register.html'">Join as teacher</button></div>
+        <div class="card"><h3>🛡 Admins</h3><p class="muted" style="font-size:13px;margin:6px 0 12px">Manage students, teachers, subjects and institution-wide reports.</p><button class="ghost sm" onclick="location.href='register.html'">Join as admin</button></div>
+      </div>
+    </section>
+
+    <section class="section" id="security">
+      <div class="card" style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+        <div style="font-size:26px">🔒</div>
+        <div style="flex:1;min-width:240px">
+          <h3 style="color:var(--primary);font-size:15px">Enterprise-grade basics</h3>
+          <p class="muted" style="font-size:13px;margin-top:4px">Role-based route guards on every portal page · validated forms with inline errors · responsive down to 360px phones · works offline in demo mode and live when the Flask backend is reachable. API base is centralized in <code>js/config.js</code>.</p>
+        </div>
+        <span class="badge ok">✓ Audited frontend</span>
+      </div>
+    </section>
+
+    <div class="cta-band">
+      <div>
+        <h2>Ready to catch every struggling student early?</h2>
+        <p>Create an account or explore the live demo — no credit card required.</p>
+      </div>
+      <div class="hero-cta">
+        <button onclick="location.href='register.html'">Create account</button>
+        <button class="ghost" onclick="location.href='login.html'">Log in</button>
+      </div>
+    </div>
+
+    <footer class="site-footer">© <span id="year"></span> EduPulse · Student Performance System · <a href="login.html">Login</a> · <a href="register.html">Register</a></footer>
+  </div>
+
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/guard.js"></script>
   <script src="js/utils.js"></script>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+    // Already signed in? Skip marketing and go straight to work.
+    try { if (isLoggedIn()) goToDashboard(getSession().role); } catch {}
+  </script>
 </body>
 </html>

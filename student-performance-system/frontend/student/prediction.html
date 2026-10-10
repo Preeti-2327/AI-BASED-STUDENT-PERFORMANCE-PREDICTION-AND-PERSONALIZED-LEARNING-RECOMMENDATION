@@ -3,22 +3,113 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prediction</title>
+  <title>New Prediction · SPS Student</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/auth.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>Prediction</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/guard.js"></script>
-  <script src="../js/utils.js"></script>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img class="logo-img" src="../assets/images/logo.svg" alt="SPS logo"><div><strong>SPS Student</strong><small>Learning Portal</small></div></div>
+    <nav class="nav">
+      <div class="nav-label">Learn</div>
+      <a href="dashboard.html" data-page="dashboard.html"><span class="ico">📊</span> Dashboard</a>
+      <a href="prediction.html" data-page="prediction.html"><span class="ico">🔮</span> New Prediction</a>
+      <a href="my-marks.html" data-page="my-marks.html"><span class="ico">📝</span> My Marks</a>
+      <a href="recommendations.html" data-page="recommendations.html"><span class="ico">🎯</span> Recommendations</a>
+      <div class="nav-label">Me</div>
+      <a href="study-habits.html" data-page="study-habits.html"><span class="ico">📚</span> Study Habits</a>
+      <a href="history.html" data-page="history.html"><span class="ico">🕘</span> History</a>
+      <a href="profile.html" data-page="profile.html"><span class="ico">👤</span> Profile</a>
+      <div class="nav-label">System</div>
+      <a href="../index.html"><span class="ico">🏠</span> View Site</a>
+      <a href="#" data-logout><span class="ico">🚪</span> Logout</a>
+    </nav>
+    <div class="side-foot">© <span id="year"></span> SPS · v1.0</div>
+  </aside>
+  <div class="main-area">
+    <div class="topbar"><button class="ghost sm menu-btn" id="menuBtn">☰</button><span class="title">New Prediction</span><span class="spacer"></span><div class="user-chip"><span class="avatar">S</span><span data-username>Student</span></div></div>
+    <div class="content">
+      <div class="page-head"><div><h1>Predict My Grade 🔮</h1><p>Answer a few questions — the ML model predicts your final grade / 20. Other fields use typical defaults.</p></div></div>
+      <div class="panels" style="grid-template-columns:1.4fr 1fr">
+        <div class="panel"><header><h3>Your Study Profile</h3></header><div class="pad">
+          <form id="predForm" style="display:grid;gap:12px">
+            <div class="form-2col">
+              <div><label>Age</label><input id="f_age" type="number" min="15" max="22" value="17"></div>
+              <div><label>Gender</label><select id="f_sex"><option value="F">Female</option><option value="M">Male</option></select></div>
+            </div>
+            <div class="form-2col">
+              <div><label>Weekly study time (1=low … 4=high)</label><input id="f_studytime" type="number" min="1" max="4" value="2"></div>
+              <div><label>Past class failures</label><input id="f_failures" type="number" min="0" max="3" value="0"></div>
+            </div>
+            <div class="form-2col">
+              <div><label>School absences (days)</label><input id="f_absences" type="number" min="0" max="75" value="4"></div>
+              <div><label>Travel time to school (1-4)</label><input id="f_traveltime" type="number" min="1" max="4" value="1"></div>
+            </div>
+            <div class="form-2col">
+              <div><label>Family relationships (1-5)</label><input id="f_famrel" type="number" min="1" max="5" value="4"></div>
+              <div><label>Free time (1-5)</label><input id="f_freetime" type="number" min="1" max="5" value="3"></div>
+            </div>
+            <div class="form-2col">
+              <div><label>Going out (1-5)</label><input id="f_goout" type="number" min="1" max="5" value="3"></div>
+              <div><label>Health (1-5)</label><input id="f_health" type="number" min="1" max="5" value="4"></div>
+            </div>
+            <div class="form-2col">
+              <div><label>Weekday alcohol (1-5)</label><input id="f_dalc" type="number" min="1" max="5" value="1"></div>
+              <div><label>Weekend alcohol (1-5)</label><input id="f_walc" type="number" min="1" max="5" value="1"></div>
+            </div>
+            <div class="auth-error" id="formError"></div>
+            <button type="submit" id="submitBtn">Predict My Grade</button>
+          </form>
+        </div></div>
+        <div class="panel"><header><h3>Your Result</h3><span class="badge neutral" id="resBadge">waiting</span></header><div class="pad" id="resultBox">
+          <p class="empty">Fill the form and hit Predict.<br>Backend must be running:<br><code>python backend/app.py</code></p>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/guard.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/student.js"></script>
+<script>
+Student.seedDemo();
+requireRole(["student"]);
+const DEFAULTS = { school: "GP", address: "U", famsize: "GT3", Pstatus: "T", Medu: 2, Fedu: 2, Mjob: "other", Fjob: "other", reason: "home", guardian: "mother", schoolsup: "no", famsup: "yes", paid: "no", activities: "yes", nursery: "yes", higher: "yes", internet: "yes", romantic: "no" };
+const num = id => parseInt(document.getElementById(id).value, 10);
+document.addEventListener("DOMContentLoaded", () => {
+  Student.bindShell();
+  document.getElementById("predForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById("submitBtn");
+    const errBox = document.getElementById("formError");
+    errBox.classList.remove("show");
+    const payload = { ...DEFAULTS, age: num("f_age"), sex: document.getElementById("f_sex").value, studytime: num("f_studytime"), failures: num("f_failures"), absences: num("f_absences"), traveltime: num("f_traveltime"), famrel: num("f_famrel"), freetime: num("f_freetime"), goout: num("f_goout"), health: num("f_health"), Dalc: num("f_dalc"), Walc: num("f_walc") };
+    btn.disabled = true; btn.textContent = " Predicting…";
+    try {
+      const data = await Student.runPrediction(payload);
+      document.getElementById("resBadge").textContent = data.performance_level;
+      document.getElementById("resBadge").className = "badge " + (data.performance_level === "Excellent" ? "ok" : data.performance_level === "Good" ? "info" : data.performance_level === "Average" ? "warn" : "danger");
+      const recos = (data.recommendations || []).map(r => `<li>${escapeHtml(typeof r === "string" ? r : (r.title || r.topic || JSON.stringify(r)))}</li>`).join("");
+      document.getElementById("resultBox").innerHTML = `
+        <div class="text-center"><div style="font-size:52px;font-weight:800;color:var(--primary)">${data.predicted_grade}<small style="font-size:18px;color:var(--muted)"> / 20</small></div>
+        <div class="mt-1">${levelBadge(data.performance_level)}</div></div>
+        <hr class="divider"><h4 style="font-size:13px;margin-bottom:8px">🎯 Your learning plan</h4>
+        <ol style="padding-left:20px;font-size:13px;display:grid;gap:6px">${recos || "<li>Keep up the routine!</li>"}</ol>
+        <button class="ghost mt-2" style="width:100%" onclick="location.href='recommendations.html'">View all recommendations →</button>`;
+      toast("Prediction saved ✓");
+    } catch (err) {
+      errBox.textContent = err.message || "Prediction failed. Is the backend running?";
+      errBox.classList.add("show");
+    } finally { btn.disabled = false; btn.textContent = "Predict My Grade"; }
+  });
+});
+</script>
 </body>
 </html>

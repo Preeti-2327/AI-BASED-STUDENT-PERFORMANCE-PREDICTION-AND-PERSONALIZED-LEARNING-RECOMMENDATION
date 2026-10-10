@@ -3,22 +3,116 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Students</title>
+  <title>Manage Students · SPS Admin</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>Manage Students</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/guard.js"></script>
-  <script src="../js/utils.js"></script>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img class="logo-img" src="../assets/images/logo.svg" alt="SPS logo"><div><strong>SPS Admin</strong><small>Performance System</small></div></div>
+    <nav class="nav">
+      <div class="nav-label">Overview</div>
+      <a href="dashboard.html" data-page="dashboard.html"><span class="ico">📊</span> Dashboard</a>
+      <a href="reports.html" data-page="reports.html"><span class="ico">📈</span> Reports</a>
+      <div class="nav-label">Manage</div>
+      <a href="manage-students.html" data-page="manage-students.html"><span class="ico">🧑‍🎓</span> Students</a>
+      <a href="manage-teachers.html" data-page="manage-teachers.html"><span class="ico">👩‍🏫</span> Teachers</a>
+      <a href="manage-subjects.html" data-page="manage-subjects.html"><span class="ico">📚</span> Subjects</a>
+      <div class="nav-label">System</div>
+      <a href="../index.html"><span class="ico">🏠</span> View Site</a>
+      <a href="#" data-logout><span class="ico">🚪</span> Logout</a>
+    </nav>
+    <div class="side-foot">© <span id="year"></span> SPS · v1.0</div>
+  </aside>
+  <div class="main-area">
+    <div class="topbar"><button class="ghost sm menu-btn" id="menuBtn">☰</button><span class="title">Manage Students</span><span class="spacer"></span><div class="user-chip"><span class="avatar">A</span><span data-username>Admin</span></div></div>
+    <div class="content">
+      <div class="page-head"><div><h1>Students <span class="badge info" id="countBadge">0</span></h1><p>Search, filter, add, edit and export learner records.</p></div>
+        <div class="toolbar"><button id="exportBtn" class="ghost">⬇ Export CSV</button><button id="addBtn">+ Add Student</button></div></div>
+      <div class="card" style="margin-bottom:14px"><div class="toolbar">
+        <div class="search"><input id="q" placeholder="Search name, id, email…"></div>
+        <select id="levelFilter" style="max-width:190px"><option value="">All levels</option><option>Excellent</option><option>Good</option><option>Average</option><option>Needs Improvement</option></select>
+        <select id="gradeFilter" style="max-width:150px"><option value="">All grades</option><option>9-A</option><option>9-B</option><option>10-A</option><option>10-B</option></select>
+        <span class="spacer"></span><span class="muted" id="showing"></span>
+      </div></div>
+      <div class="table-wrap"><table><thead><tr><th>Student</th><th>ID</th><th>Class</th><th>Avg / 20</th><th>Level</th><th>Attendance</th><th style="text-align:right">Actions</th></tr></thead><tbody id="rows"></tbody></table></div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="modal"><div class="modal">
+  <header><h3 id="modalTitle">Add Student</h3><button class="ghost sm" id="closeModal" aria-label="Close dialog">✕</button></header>
+  <div class="body">
+    <div class="form-2col">
+      <div><label>Full name</label><input id="f_name" placeholder="e.g. Aarav Sharma"></div>
+      <div><label>Student ID</label><input id="f_id" placeholder="STU-006"></div>
+    </div>
+    <div class="form-2col">
+      <div><label>Email</label><input id="f_email" type="email" placeholder="name@example.com"></div>
+      <div><label>Class</label><select id="f_grade"><option>9-A</option><option>9-B</option><option>10-A</option><option>10-B</option></select></div>
+    </div>
+    <div class="form-2col">
+      <div><label>Avg grade / 20</label><input id="f_avg" type="number" min="0" max="20" step="0.1" value="12"></div>
+      <div><label>Attendance %</label><input id="f_att" type="number" min="0" max="100" value="90"></div>
+    </div>
+    <div><label>Performance level</label><select id="f_level"><option>Excellent</option><option>Good</option><option>Average</option><option>Needs Improvement</option></select></div>
+  </div>
+  <footer><button class="ghost" id="cancelBtn">Cancel</button><button id="saveBtn">Save Student</button></footer>
+</div></div>
+<script src="../js/config.js"></script><script src="../js/api.js"></script><script src="../js/guard.js"></script>
+<script src="../js/utils.js"></script><script src="../js/charts.js"></script><script src="../js/admin.js"></script>
+<script>
+requireRole(["admin"]);
+let editing = null;
+const get = () => load(LS.students, []);
+const set = v => store(LS.students, v);
+function render() {
+  const q = document.getElementById("q").value.toLowerCase();
+  const lf = document.getElementById("levelFilter").value, gf = document.getElementById("gradeFilter").value;
+  const all = get();
+  const list = all.filter(s => (!q || (s.name + s.id + s.email).toLowerCase().includes(q)) && (!lf || s.level === lf) && (!gf || s.grade === gf));
+  document.getElementById("countBadge").textContent = all.length;
+  document.getElementById("showing").textContent = `Showing ${list.length} of ${all.length}`;
+  document.getElementById("rows").innerHTML = list.length ? list.map(s => `<tr>
+    <td><div class="row"><span class="avatar">${initials(s.name)}</span><div><b>${escapeHtml(s.name)}</b><div class="muted" style="font-size:12px">${escapeHtml(s.email)}</div></div></div></td>
+    <td class="muted">${escapeHtml(s.id)}</td><td><span class="badge neutral">${escapeHtml(s.grade)}</span></td>
+    <td><b>${s.avg}</b></td><td>${levelBadge(s.level)}</td>
+    <td><div class="progress" style="min-width:90px"><i style="width:${s.attendance}%;background:${s.attendance < 75 ? "var(--danger)" : "var(--ok)"}"></i></div><small class="muted">${s.attendance}%</small></td>
+    <td style="text-align:right;white-space:nowrap"><button class="ghost sm" onclick="editStudent('${s.id}')">Edit</button> <button class="danger sm" onclick="delStudent('${s.id}')">Delete</button></td></tr>`).join("")
+    : `<tr><td colspan="7" class="empty">No students found. <a href="#" onclick="openModal();return false">Add one →</a></td></tr>`;
+}
+function openModal(s) {
+  editing = s?.id || null;
+  document.getElementById("modalTitle").textContent = editing ? "Edit Student" : "Add Student";
+  document.getElementById("f_name").value = s?.name || ""; document.getElementById("f_id").value = s?.id || ("STU-" + String(get().length + 1).padStart(3, "0"));
+  document.getElementById("f_email").value = s?.email || ""; document.getElementById("f_grade").value = s?.grade || "10-A";
+  document.getElementById("f_avg").value = s?.avg ?? 12; document.getElementById("f_att").value = s?.attendance ?? 90;
+  document.getElementById("f_level").value = s?.level || "Good";
+  document.getElementById("f_id").disabled = !!editing;
+  document.getElementById("modal").classList.add("open");
+}
+window.editStudent = id => openModal(get().find(s => s.id === id));
+window.delStudent = id => { if (!confirm("Delete " + id + "?")) return; set(get().filter(s => s.id !== id)); render(); toast("Student deleted"); };
+document.addEventListener("DOMContentLoaded", () => {
+  render();
+  ["q", "levelFilter", "gradeFilter"].forEach(i => document.getElementById(i).addEventListener("input", render));
+  document.getElementById("addBtn").onclick = () => openModal();
+  document.getElementById("closeModal").onclick = document.getElementById("cancelBtn").onclick = () => document.getElementById("modal").classList.remove("open");
+  document.getElementById("exportBtn").onclick = () => downloadCSV("students.csv", get());
+  document.getElementById("saveBtn").onclick = () => {
+    const name = document.getElementById("f_name").value.trim();
+    if (!name) return toast("Name is required");
+    const rawId = document.getElementById("f_id").value.trim();
+    if (!/^[A-Za-z0-9-]{1,16}$/.test(rawId)) return toast("ID: letters, numbers and - only");
+    const rec = { id: rawId, name, email: document.getElementById("f_email").value.trim(), grade: document.getElementById("f_grade").value, avg: parseFloat(document.getElementById("f_avg").value) || 0, attendance: parseInt(document.getElementById("f_att").value) || 0, level: document.getElementById("f_level").value };
+    const all = get();
+    if (editing) Object.assign(all.find(s => s.id === editing), rec);
+    else { if (all.some(s => s.id === rec.id)) return toast("ID already exists"); all.push(rec); }
+    set(all); document.getElementById("modal").classList.remove("open"); render(); toast("Student saved ✓");
+  };
+});
+</script>
 </body>
 </html>

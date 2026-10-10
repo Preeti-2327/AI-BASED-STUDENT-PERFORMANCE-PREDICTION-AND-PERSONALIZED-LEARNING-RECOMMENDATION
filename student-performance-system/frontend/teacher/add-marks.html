@@ -3,22 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add Marks</title>
+  <title>Add Marks · SPS Teacher</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/auth.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>Add Marks</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/guard.js"></script>
-  <script src="../js/utils.js"></script>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img class="logo-img" src="../assets/images/logo.svg" alt="SPS logo"><div><strong>SPS Teacher</strong><small>Classroom Portal</small></div></div>
+    <nav class="nav">
+      <div class="nav-label">Classroom</div>
+      <a href="dashboard.html" data-page="dashboard.html"><span class="ico">📊</span> Dashboard</a>
+      <a href="students.html" data-page="students.html"><span class="ico">🧑‍🎓</span> Students</a>
+      <a href="add-marks.html" data-page="add-marks.html"><span class="ico">📝</span> Add Marks</a>
+      <a href="at-risk.html" data-page="at-risk.html"><span class="ico">⚠️</span> At-Risk</a>
+      <a href="attendance.html" data-page="attendance.html"><span class="ico">✅</span> Attendance</a>
+      <div class="nav-label">System</div>
+      <a href="../index.html"><span class="ico">🏠</span> View Site</a>
+      <a href="#" data-logout><span class="ico">🚪</span> Logout</a>
+    </nav>
+    <div class="side-foot">© <span id="year"></span> SPS · v1.0</div>
+  </aside>
+  <div class="main-area">
+    <div class="topbar"><button class="ghost sm menu-btn" id="menuBtn">☰</button><span class="title">Add Marks / Predict</span><span class="spacer"></span><div class="user-chip"><span class="avatar">T</span><span data-username>Teacher</span></div></div>
+    <div class="content">
+      <div class="page-head"><div><h1>Assess a Student 📝</h1><p>Enter observations — the model predicts the final grade and saves it to history.</p></div></div>
+      <div class="panels" style="grid-template-columns:1.4fr 1fr">
+        <div class="panel"><header><h3>Assessment Form</h3></header><div class="pad">
+          <form id="marksForm" style="display:grid;gap:12px">
+            <div><label>Student</label><select id="m_student"></select></div>
+            <div class="form-2col">
+              <div><label>Age</label><input id="m_age" type="number" min="15" max="22" value="17"></div>
+              <div><label>Gender</label><select id="m_sex"><option value="F">Female</option><option value="M">Male</option></select></div>
+            </div>
+            <div class="form-2col">
+              <div><label>Study time (1-4)</label><input id="m_studytime" type="number" min="1" max="4" value="2"></div>
+              <div><label>Past failures</label><input id="m_failures" type="number" min="0" max="3" value="0"></div>
+            </div>
+            <div class="form-2col">
+              <div><label>Absences (days)</label><input id="m_absences" type="number" min="0" max="75" value="4"></div>
+              <div><label>Health (1-5)</label><input id="m_health" type="number" min="1" max="5" value="4"></div>
+            </div>
+            <div class="form-2col">
+              <div><label>Family relations (1-5)</label><input id="m_famrel" type="number" min="1" max="5" value="4"></div>
+              <div><label>Free time (1-5)</label><input id="m_freetime" type="number" min="1" max="5" value="3"></div>
+            </div>
+            <div class="auth-error" id="formError"></div>
+            <button type="submit" id="submitBtn">Save & Predict</button>
+          </form>
+        </div></div>
+        <div class="panel"><header><h3>Result</h3><span class="badge neutral" id="resBadge">waiting</span></header><div class="pad" id="resultBox">
+          <p class="empty">Result appears here.<br>Backend must be running:<br><code>python backend/app.py</code></p>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/guard.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/teacher.js"></script>
+<script>
+Teacher.seedDemo();
+requireRole(["teacher"]);
+// NOTE: auth.css not loaded here; .auth-error styled inline below if missing.
+const DEFAULTS = { school: "GP", address: "U", famsize: "GT3", Pstatus: "T", Medu: 2, Fedu: 2, Mjob: "other", Fjob: "other", reason: "home", guardian: "mother", traveltime: 1, goout: 3, Dalc: 1, Walc: 1, schoolsup: "no", famsup: "yes", paid: "no", activities: "yes", nursery: "yes", higher: "yes", internet: "yes", romantic: "no" };
+const num = id => parseInt(document.getElementById(id).value, 10);
+document.addEventListener("DOMContentLoaded", () => {
+  Teacher.bindShell();
+  const roster = Teacher.roster();
+  const sel = document.getElementById("m_student");
+  sel.innerHTML = roster.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)} · ${escapeHtml(s.id)}</option>`).join("");
+  const pre = new URLSearchParams(location.search).get("id");
+  if (pre && roster.some(s => s.id === pre)) sel.value = pre;
+  document.getElementById("marksForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById("submitBtn"), errBox = document.getElementById("formError");
+    errBox.classList.remove("show");
+    const payload = { ...DEFAULTS, age: num("m_age"), sex: document.getElementById("m_sex").value, studytime: num("m_studytime"), failures: num("m_failures"), absences: num("m_absences"), health: num("m_health"), famrel: num("m_famrel"), freetime: num("m_freetime") };
+    btn.disabled = true; btn.textContent = " Saving…";
+    try {
+      const data = await Teacher.predictFor(payload);
+      const who = roster.find(s => s.id === sel.value);
+      document.getElementById("resBadge").textContent = data.performance_level;
+      document.getElementById("resBadge").className = "badge " + (data.performance_level === "Excellent" ? "ok" : data.performance_level === "Good" ? "info" : data.performance_level === "Average" ? "warn" : "danger");
+      document.getElementById("resultBox").innerHTML = `
+        <div class="row"><span class="avatar">${initials(who?.name)}</span><div><b>${escapeHtml(who?.name || "")}</b><div class="muted" style="font-size:12px">${escapeHtml(sel.value)}</div></div></div>
+        <div class="text-center mt-1"><div style="font-size:48px;font-weight:800;color:var(--primary)">${data.predicted_grade}<small style="font-size:16px;color:var(--muted)"> / 20</small></div>
+        <div class="mt-1">${levelBadge(data.performance_level)}</div></div>
+        <p class="muted mt-1" style="font-size:12px">Saved to prediction history ✓</p>`;
+      toast("Marks saved ✓");
+    } catch (err) {
+      errBox.textContent = err.message || "Failed. Is the backend running?";
+      errBox.classList.add("show");
+      errBox.style.cssText = "display:block;background:#fdecea;color:#b03a36;border:1px solid #f5c6c3;padding:10px 12px;border-radius:8px;font-size:13px";
+    } finally { btn.disabled = false; btn.textContent = "Save & Predict"; }
+  });
+});
+</script>
 </body>
 </html>

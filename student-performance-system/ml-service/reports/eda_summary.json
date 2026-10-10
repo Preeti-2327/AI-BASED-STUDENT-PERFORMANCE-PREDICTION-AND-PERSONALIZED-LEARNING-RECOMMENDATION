@@ -1,0 +1,232 @@
+{
+  "generated_at": "2026-10-10T03:15:05.108703+00:00",
+  "schema": "uci",
+  "dataset": "student-mat.csv",
+  "rows": 395,
+  "columns": 33,
+  "column_names": [
+    "school",
+    "sex",
+    "age",
+    "address",
+    "famsize",
+    "Pstatus",
+    "Medu",
+    "Fedu",
+    "Mjob",
+    "Fjob",
+    "reason",
+    "guardian",
+    "traveltime",
+    "studytime",
+    "failures",
+    "schoolsup",
+    "famsup",
+    "paid",
+    "activities",
+    "nursery",
+    "higher",
+    "internet",
+    "romantic",
+    "famrel",
+    "freetime",
+    "goout",
+    "Dalc",
+    "Walc",
+    "health",
+    "absences",
+    "G1",
+    "G2",
+    "G3"
+  ],
+  "missing_total": 0,
+  "missing_by_column": {},
+  "duplicates": 0,
+  "target": {
+    "name": "G3",
+    "mean": 10.415,
+    "median": 11.0,
+    "std": 4.581,
+    "min": 0.0,
+    "max": 20.0,
+    "scale_max": 20
+  },
+  "level_distribution": {
+    "Needs Improvement": 186,
+    "Average": 109,
+    "Good": 76,
+    "Excellent": 24
+  },
+  "numeric_describe": {
+    "age": {
+      "count": 395.0,
+      "mean": 16.696,
+      "std": 1.276,
+      "min": 15.0,
+      "25%": 16.0,
+      "50%": 17.0,
+      "75%": 18.0,
+      "max": 22.0
+    },
+    "Medu": {
+      "count": 395.0,
+      "mean": 2.749,
+      "std": 1.095,
+      "min": 0.0,
+      "25%": 2.0,
+      "50%": 3.0,
+      "75%": 4.0,
+      "max": 4.0
+    },
+    "Fedu": {
+      "count": 395.0,
+      "mean": 2.522,
+      "std": 1.088,
+      "min": 0.0,
+      "25%": 2.0,
+      "50%": 2.0,
+      "75%": 3.0,
+      "max": 4.0
+    },
+    "traveltime": {
+      "count": 395.0,
+      "mean": 1.448,
+      "std": 0.698,
+      "min": 1.0,
+      "25%": 1.0,
+      "50%": 1.0,
+      "75%": 2.0,
+      "max": 4.0
+    },
+    "studytime": {
+      "count": 395.0,
+      "mean": 2.035,
+      "std": 0.839,
+      "min": 1.0,
+      "25%": 1.0,
+      "50%": 2.0,
+      "75%": 2.0,
+      "max": 4.0
+    },
+    "failures": {
+      "count": 395.0,
+      "mean": 0.334,
+      "std": 0.744,
+      "min": 0.0,
+      "25%": 0.0,
+      "50%": 0.0,
+      "75%": 0.0,
+      "max": 3.0
+    },
+    "famrel": {
+      "count": 395.0,
+      "mean": 3.944,
+      "std": 0.897,
+      "min": 1.0,
+      "25%": 4.0,
+      "50%": 4.0,
+      "75%": 5.0,
+      "max": 5.0
+    },
+    "freetime": {
+      "count": 395.0,
+      "mean": 3.235,
+      "std": 0.999,
+      "min": 1.0,
+      "25%": 3.0,
+      "50%": 3.0,
+      "75%": 4.0,
+      "max": 5.0
+    },
+    "goout": {
+      "count": 395.0,
+      "mean": 3.109,
+      "std": 1.113,
+      "min": 1.0,
+      "25%": 2.0,
+      "50%": 3.0,
+      "75%": 4.0,
+      "max": 5.0
+    },
+    "Dalc": {
+      "count": 395.0,
+      "mean": 1.481,
+      "std": 0.891,
+      "min": 1.0,
+      "25%": 1.0,
+      "50%": 1.0,
+      "75%": 2.0,
+      "max": 5.0
+    },
+    "Walc": {
+      "count": 395.0,
+      "mean": 2.291,
+      "std": 1.288,
+      "min": 1.0,
+      "25%": 1.0,
+      "50%": 2.0,
+      "75%": 3.0,
+      "max": 5.0
+    },
+    "health": {
+      "count": 395.0,
+      "mean": 3.554,
+      "std": 1.39,
+      "min": 1.0,
+      "25%": 3.0,
+      "50%": 4.0,
+      "75%": 5.0,
+      "max": 5.0
+    },
+    "absences": {
+      "count": 395.0,
+      "mean": 5.709,
+      "std": 8.003,
+      "min": 0.0,
+      "25%": 0.0,
+      "50%": 4.0,
+      "75%": 8.0,
+      "max": 75.0
+    },
+    "G1": {
+      "count": 395.0,
+      "mean": 10.909,
+      "std": 3.319,
+      "min": 3.0,
+      "25%": 8.0,
+      "50%": 11.0,
+      "75%": 13.0,
+      "max": 19.0
+    },
+    "G2": {
+      "count": 395.0,
+      "mean": 10.714,
+      "std": 3.762,
+      "min": 0.0,
+      "25%": 9.0,
+      "50%": 11.0,
+      "75%": 13.0,
+      "max": 19.0
+    },
+    "G3": {
+      "count": 395.0,
+      "mean": 10.415,
+      "std": 4.581,
+      "min": 0.0,
+      "25%": 8.0,
+      "50%": 11.0,
+      "75%": 14.0,
+      "max": 20.0
+    }
+  },
+  "top_abs_corr_with_G3": {
+    "G3": 1.0,
+    "G2": 0.905,
+    "G1": 0.801,
+    "failures": 0.36,
+    "Medu": 0.217,
+    "age": 0.162,
+    "Fedu": 0.152,
+    "goout": 0.133
+  }
+}

@@ -3,22 +3,94 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Dashboard</title>
+  <title>Student Dashboard · SPS</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>Student Dashboard</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/guard.js"></script>
-  <script src="../js/utils.js"></script>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img class="logo-img" src="../assets/images/logo.svg" alt="SPS logo"><div><strong>SPS Student</strong><small>Learning Portal</small></div></div>
+    <nav class="nav">
+      <div class="nav-label">Learn</div>
+      <a href="dashboard.html" data-page="dashboard.html"><span class="ico">📊</span> Dashboard</a>
+      <a href="prediction.html" data-page="prediction.html"><span class="ico">🔮</span> New Prediction</a>
+      <a href="my-marks.html" data-page="my-marks.html"><span class="ico">📝</span> My Marks</a>
+      <a href="recommendations.html" data-page="recommendations.html"><span class="ico">🎯</span> Recommendations</a>
+      <div class="nav-label">Me</div>
+      <a href="study-habits.html" data-page="study-habits.html"><span class="ico">📚</span> Study Habits</a>
+      <a href="history.html" data-page="history.html"><span class="ico">🕘</span> History</a>
+      <a href="profile.html" data-page="profile.html"><span class="ico">👤</span> Profile</a>
+      <div class="nav-label">System</div>
+      <a href="../index.html"><span class="ico">🏠</span> View Site</a>
+      <a href="#" data-logout><span class="ico">🚪</span> Logout</a>
+    </nav>
+    <div class="side-foot">© <span id="year"></span> SPS · v1.0</div>
+  </aside>
+  <div class="main-area">
+    <div class="topbar"><button class="ghost sm menu-btn" id="menuBtn">☰</button><span class="title">My Dashboard</span><span class="spacer"></span><span class="badge info" id="backendStatus">…</span><div class="user-chip"><span class="avatar" id="avatarInit">S</span><span data-username>Student</span></div></div>
+    <div class="content">
+      <div class="page-head"><div><h1 id="welcomeTitle">Welcome 👋</h1><p>Your grades, predictions and next steps — in one place.</p></div>
+        <div class="toolbar"><button class="ghost" onclick="location.href='study-habits.html'">📚 Study Plan</button><button onclick="location.href='prediction.html'">🔮 New Prediction</button></div></div>
+      <section class="stats">
+        <div class="stat"><div class="icon" style="background:#e8f1fd">⭐</div><div><b id="cAvg">–</b><span>Average Grade / 20</span></div></div>
+        <div class="stat"><div class="icon" style="background:#e3f5e9">📝</div><div><b id="cPred">0</b><span>Predictions</span></div></div>
+        <div class="stat"><div class="icon" style="background:#fef3e2">⏱</div><div><b id="cHours">–</b><span>Study hrs / day</span></div></div>
+        <div class="stat"><div class="icon" style="background:#fdecea">🎯</div><div><b id="cLevel">–</b><span>Current Level</span></div></div>
+      </section>
+      <section class="panels">
+        <div class="panel"><header><h3>My Performance Trend</h3><a href="my-marks.html">Details →</a></header><div class="pad"><canvas class="chart" id="trendChart"></canvas></div></div>
+        <div class="panel"><header><h3>Latest Recommendations</h3><a href="recommendations.html">View all →</a></header><div class="pad" id="recoBox"><p class="muted">Loading…</p></div></div>
+      </section>
+      <div class="panel"><header><h3>Recent Grades</h3><a href="history.html">Full history →</a></header><div class="table-wrap" style="border:0"><table><thead><tr><th>#</th><th>Grade</th><th>Level</th><th>When</th></tr></thead><tbody id="recentRows"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody></table></div></div>
+    </div>
+  </div>
+</div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/guard.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/student.js"></script>
+<script>
+Student.seedDemo();
+requireRole(["student"]);
+document.addEventListener("DOMContentLoaded", async () => {
+  Student.bindShell();
+  const me = Student.getProfile();
+  document.getElementById("welcomeTitle").textContent = `Welcome, ${me.name.split(" ")[0]} 👋`;
+  document.getElementById("avatarInit").textContent = initials(me.name);
+  const habits = Student.getHabits();
+  document.getElementById("cHours").textContent = habits.hoursPerDay;
+  let grades = [], live = false, latestRecos = [];
+  try {
+    const history = await getHistory();
+    live = history.length > 0;
+    grades = (history.length ? history : []).slice(0, 6).map(h => ({ grade: h.predicted_grade, level: h.performance_level, when: h.created_at }));
+    if (history[0]?.recommendations) latestRecos = history[0].recommendations;
+  } catch { /* offline */ }
+  if (!grades.length) grades = await Student.myGrades();
+  document.getElementById("backendStatus").textContent = live ? "● backend live" : "○ demo data";
+  document.getElementById("backendStatus").className = "badge " + (live ? "ok" : "neutral");
+  document.getElementById("cPred").textContent = grades.length;
+  if (grades.length) {
+    const avg = grades.reduce((a, g) => a + (+g.grade || 0), 0) / grades.length;
+    document.getElementById("cAvg").textContent = avg.toFixed(1);
+    document.getElementById("cLevel").textContent = grades[0].level || "–";
+    drawBarChart(document.getElementById("trendChart"),
+      grades.map((g, i) => "P" + (grades.length - i)).reverse(),
+      grades.map(g => +g.grade || 0).reverse());
+    document.getElementById("recentRows").innerHTML = grades.slice(0, 5).map((g, i) =>
+      `<tr><td>${i + 1}</td><td><b>${g.grade}</b> / 20</td><td>${levelBadge(g.level)}</td><td class="muted">${fmtDate(g.when)}</td></tr>`).join("");
+  } else {
+    document.getElementById("recentRows").innerHTML = `<tr><td colspan="4" class="empty">No predictions yet. <a href="prediction.html">Run your first prediction →</a></td></tr>`;
+  }
+  document.getElementById("recoBox").innerHTML = latestRecos.length
+    ? Student.renderRecommendations(latestRecos.slice(0, 3))
+    : `<p class="muted">Run a prediction to get personalized tips.</p><button class="mt-1" onclick="location.href='prediction.html'">Get Started</button>`;
+});
+</script>
 </body>
 </html>

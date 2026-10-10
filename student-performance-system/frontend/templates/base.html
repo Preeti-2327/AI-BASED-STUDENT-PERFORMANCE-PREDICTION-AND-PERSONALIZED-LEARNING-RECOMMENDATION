@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}AI Student Performance{% endblock %}</title>
+
+    <meta name="description" content="Predict student performance with machine learning and get personalized learning recommendations.">
+
+    <meta name="theme-color" content="#1f3a5f">
+
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    {% block head %}{% endblock %}
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+    {% block content %}{% endblock %}
+
+    <p class="foot">
+        SPS · Flask + Machine Learning · API: <a href="/history">/history</a>
+    </p>
+
+</div>
+
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+{% block scripts %}{% endblock %}
+
+
+</body>
+
+</html>

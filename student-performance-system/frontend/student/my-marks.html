@@ -3,22 +3,74 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Marks</title>
+  <title>My Marks · SPS Student</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>My Marks</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/guard.js"></script>
-  <script src="../js/utils.js"></script>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img class="logo-img" src="../assets/images/logo.svg" alt="SPS logo"><div><strong>SPS Student</strong><small>Learning Portal</small></div></div>
+    <nav class="nav">
+      <div class="nav-label">Learn</div>
+      <a href="dashboard.html" data-page="dashboard.html"><span class="ico">📊</span> Dashboard</a>
+      <a href="prediction.html" data-page="prediction.html"><span class="ico">🔮</span> New Prediction</a>
+      <a href="my-marks.html" data-page="my-marks.html"><span class="ico">📝</span> My Marks</a>
+      <a href="recommendations.html" data-page="recommendations.html"><span class="ico">🎯</span> Recommendations</a>
+      <div class="nav-label">Me</div>
+      <a href="study-habits.html" data-page="study-habits.html"><span class="ico">📚</span> Study Habits</a>
+      <a href="history.html" data-page="history.html"><span class="ico">🕘</span> History</a>
+      <a href="profile.html" data-page="profile.html"><span class="ico">👤</span> Profile</a>
+      <div class="nav-label">System</div>
+      <a href="../index.html"><span class="ico">🏠</span> View Site</a>
+      <a href="#" data-logout><span class="ico">🚪</span> Logout</a>
+    </nav>
+    <div class="side-foot">© <span id="year"></span> SPS · v1.0</div>
+  </aside>
+  <div class="main-area">
+    <div class="topbar"><button class="ghost sm menu-btn" id="menuBtn">☰</button><span class="title">My Marks</span><span class="spacer"></span><div class="user-chip"><span class="avatar">S</span><span data-username>Student</span></div></div>
+    <div class="content">
+      <div class="page-head"><div><h1>My Marks 📝</h1><p>Every predicted grade, best score and progress chart.</p></div>
+        <div class="toolbar"><button class="ghost" id="exportBtn">⬇ Export CSV</button><button onclick="location.href='prediction.html'">+ New Prediction</button></div></div>
+      <section class="stats" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat"><div class="icon" style="background:#e8f1fd">⭐</div><div><b id="sAvg">–</b><span>Average</span></div></div>
+        <div class="stat"><div class="icon" style="background:#e3f5e9">🏆</div><div><b id="sBest">–</b><span>Best Score</span></div></div>
+        <div class="stat"><div class="icon" style="background:#fef3e2">📝</div><div><b id="sCount">0</b><span>Attempts</span></div></div>
+      </section>
+      <div class="panel mb-2"><header><h3>Score Chart</h3></header><div class="pad"><canvas class="chart" id="marksChart"></canvas></div></div>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>Grade / 20</th><th>Level</th><th>When</th></tr></thead><tbody id="rows"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody></table></div>
+    </div>
+  </div>
+</div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/guard.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/student.js"></script>
+<script>
+Student.seedDemo();
+requireRole(["student"]);
+let DATA = [];
+document.addEventListener("DOMContentLoaded", async () => {
+  Student.bindShell();
+  DATA = await Student.myGrades();
+  document.getElementById("sCount").textContent = DATA.length;
+  if (DATA.length) {
+    const vals = DATA.map(g => +g.grade || 0);
+    document.getElementById("sAvg").textContent = (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+    document.getElementById("sBest").textContent = Math.max(...vals).toFixed(1);
+    drawBarChart(document.getElementById("marksChart"),
+      DATA.map((g, i) => "P" + (DATA.length - i)).reverse(), [...vals].reverse());
+    document.getElementById("rows").innerHTML = DATA.map((g, i) =>
+      `<tr><td>${i + 1}</td><td><b>${g.grade}</b> / 20</td><td>${levelBadge(g.level)}</td><td class="muted">${fmtDate(g.when)}</td></tr>`).join("");
+  } else {
+    document.getElementById("rows").innerHTML = `<tr><td colspan="4" class="empty">No marks yet. <a href="prediction.html">Run a prediction →</a></td></tr>`;
+  }
+  document.getElementById("exportBtn").onclick = () => downloadCSV("my-marks.csv", DATA);
+});
+</script>
 </body>
 </html>

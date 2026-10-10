@@ -3,22 +3,94 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Attendance</title>
+  <title>Attendance · SPS Teacher</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>Attendance</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/guard.js"></script>
-  <script src="../js/utils.js"></script>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img class="logo-img" src="../assets/images/logo.svg" alt="SPS logo"><div><strong>SPS Teacher</strong><small>Classroom Portal</small></div></div>
+    <nav class="nav">
+      <div class="nav-label">Classroom</div>
+      <a href="dashboard.html" data-page="dashboard.html"><span class="ico">📊</span> Dashboard</a>
+      <a href="students.html" data-page="students.html"><span class="ico">🧑‍🎓</span> Students</a>
+      <a href="add-marks.html" data-page="add-marks.html"><span class="ico">📝</span> Add Marks</a>
+      <a href="at-risk.html" data-page="at-risk.html"><span class="ico">⚠️</span> At-Risk</a>
+      <a href="attendance.html" data-page="attendance.html"><span class="ico">✅</span> Attendance</a>
+      <div class="nav-label">System</div>
+      <a href="../index.html"><span class="ico">🏠</span> View Site</a>
+      <a href="#" data-logout><span class="ico">🚪</span> Logout</a>
+    </nav>
+    <div class="side-foot">© <span id="year"></span> SPS · v1.0</div>
+  </aside>
+  <div class="main-area">
+    <div class="topbar"><button class="ghost sm menu-btn" id="menuBtn">☰</button><span class="title">Attendance</span><span class="spacer"></span><div class="user-chip"><span class="avatar">T</span><span data-username>Teacher</span></div></div>
+    <div class="content">
+      <div class="page-head"><div><h1>Mark Attendance ✅</h1><p id="daySub">Day-wise register, saved in this browser.</p></div>
+        <div class="toolbar"><button class="ghost" id="noneBtn">Clear all</button><button class="ghost" id="allBtn">All present</button><button id="saveBtn">💾 Save Day</button></div></div>
+      <div class="card mb-2"><div class="toolbar"><div><label>Date</label><input id="datePick" type="date" style="width:auto"></div>
+        <span class="spacer"></span><b id="presentCount" style="font-size:18px;color:var(--primary)">0 / 0</b><span class="muted">present</span></div></div>
+      <div class="table-wrap"><table><thead><tr><th style="width:44px"><input type="checkbox" id="checkAll" style="width:auto"></th><th>Student</th><th>Class</th><th>Status</th></tr></thead><tbody id="rows"></tbody></table></div>
+      <div class="panel mt-2"><header><h3>Past Days</h3></header><div class="table-wrap" style="border:0"><table><thead><tr><th>Date</th><th>Present</th><th>%</th></tr></thead><tbody id="pastRows"></tbody></table></div></div>
+    </div>
+  </div>
+</div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/guard.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/teacher.js"></script>
+<script>
+Teacher.seedDemo();
+requireRole(["teacher"]);
+let cur = Teacher.today();
+function paint() {
+  const roster = Teacher.roster();
+  const map = Teacher.getAttendance(cur);
+  document.getElementById("datePick").value = cur;
+  document.getElementById("daySub").textContent = `${cur} · ${roster.length} students · saved in this browser.`;
+  document.getElementById("rows").innerHTML = roster.map(s => `
+    <tr><td><input type="checkbox" data-id="${escapeHtml(s.id)}" ${map[s.id] ? "checked" : ""} style="width:auto;transform:scale(1.2)"></td>
+      <td><div class="row"><span class="avatar">${initials(s.name)}</span><div><b>${escapeHtml(s.name)}</b><div class="muted" style="font-size:12px">${escapeHtml(s.id)}</div></div></div></td>
+      <td><span class="badge neutral">${escapeHtml(s.grade || "-")}</span></td>
+      <td data-status="${escapeHtml(s.id)}">${map[s.id] ? '<span class="badge ok">Present</span>' : '<span class="badge danger">Absent</span>'}</td></tr>`).join("");
+  const n = Object.values(map).filter(Boolean).length;
+  document.getElementById("presentCount").textContent = `${n} / ${roster.length}`;
+  document.querySelectorAll("#rows input[type=checkbox]").forEach(cb =>
+    cb.addEventListener("change", () => {
+      document.querySelector(`[data-status="${cb.dataset.id}"]`).innerHTML =
+        cb.checked ? '<span class="badge ok">Present</span>' : '<span class="badge danger">Absent</span>';
+      const m = readMap(); m[cb.dataset.id] = cb.checked;
+      const total = Object.values(m).filter(Boolean).length;
+      document.getElementById("presentCount").textContent = `${total} / ${roster.length}`;
+    }));
+  // past days
+  const all = load("sps_attendance", {});
+  const days = Object.keys(all).sort().reverse();
+  document.getElementById("pastRows").innerHTML = days.length ? days.map(d => {
+    const vals = Object.values(all[d]);
+    const p = vals.filter(Boolean).length;
+    return `<tr><td>${d}</td><td><b>${p}</b> / ${vals.length}</td><td>${vals.length ? Math.round(p / vals.length * 100) + "%" : "-"}</td></tr>`;
+  }).join("") : `<tr><td colspan="3" class="empty">No days marked yet.</td></tr>`;
+}
+function readMap() {
+  const m = {};
+  document.querySelectorAll("#rows input[type=checkbox]").forEach(cb => m[cb.dataset.id] = cb.checked);
+  return m;
+}
+document.addEventListener("DOMContentLoaded", () => {
+  Teacher.bindShell();
+  paint();
+  document.getElementById("datePick").addEventListener("change", (e) => { cur = e.target.value || Teacher.today(); paint(); });
+  document.getElementById("allBtn").onclick = () => { document.querySelectorAll("#rows input[type=checkbox]").forEach(cb => { cb.checked = true; cb.dispatchEvent(new Event("change")); }); };
+  document.getElementById("noneBtn").onclick = () => { document.querySelectorAll("#rows input[type=checkbox]").forEach(cb => { cb.checked = false; cb.dispatchEvent(new Event("change")); }); };
+  document.getElementById("checkAll").onclick = (e) => { document.querySelectorAll("#rows input[type=checkbox]").forEach(cb => { cb.checked = e.target.checked; cb.dispatchEvent(new Event("change")); }); };
+  document.getElementById("saveBtn").onclick = () => { Teacher.markAttendance(cur, readMap()); paint(); };
+});
+</script>
 </body>
 </html>

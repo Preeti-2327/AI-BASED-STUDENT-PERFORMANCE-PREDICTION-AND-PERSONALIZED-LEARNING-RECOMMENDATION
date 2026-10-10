@@ -3,22 +3,99 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Subjects</title>
+  <title>Manage Subjects · SPS Admin</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>Manage Subjects</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/guard.js"></script>
-  <script src="../js/utils.js"></script>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img class="logo-img" src="../assets/images/logo.svg" alt="SPS logo"><div><strong>SPS Admin</strong><small>Performance System</small></div></div>
+    <nav class="nav">
+      <div class="nav-label">Overview</div>
+      <a href="dashboard.html" data-page="dashboard.html"><span class="ico">📊</span> Dashboard</a>
+      <a href="reports.html" data-page="reports.html"><span class="ico">📈</span> Reports</a>
+      <div class="nav-label">Manage</div>
+      <a href="manage-students.html" data-page="manage-students.html"><span class="ico">🧑‍🎓</span> Students</a>
+      <a href="manage-teachers.html" data-page="manage-teachers.html"><span class="ico">👩‍🏫</span> Teachers</a>
+      <a href="manage-subjects.html" data-page="manage-subjects.html"><span class="ico">📚</span> Subjects</a>
+      <div class="nav-label">System</div>
+      <a href="../index.html"><span class="ico">🏠</span> View Site</a>
+      <a href="#" data-logout><span class="ico">🚪</span> Logout</a>
+    </nav>
+    <div class="side-foot">© <span id="year"></span> SPS · v1.0</div>
+  </aside>
+  <div class="main-area">
+    <div class="topbar"><button class="ghost sm menu-btn" id="menuBtn">☰</button><span class="title">Manage Subjects</span><span class="spacer"></span><div class="user-chip"><span class="avatar">A</span><span data-username>Admin</span></div></div>
+    <div class="content">
+      <div class="page-head"><div><h1>Subjects <span class="badge info" id="countBadge">0</span></h1><p>Curriculum, teacher allocation & syllabus progress.</p></div>
+        <div class="toolbar"><button id="exportBtn" class="ghost">⬇ Export CSV</button><button id="addBtn">+ Add Subject</button></div></div>
+      <div class="card" style="margin-bottom:14px"><div class="toolbar"><div class="search"><input id="q" placeholder="Search subject or code…"></div><span class="spacer"></span><span class="muted" id="totalStudents"></span></div></div>
+      <div class="subj-grid" id="grid"></div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="modal"><div class="modal">
+  <header><h3 id="modalTitle">Add Subject</h3><button class="ghost sm" id="closeModal" aria-label="Close dialog">✕</button></header>
+  <div class="body">
+    <div class="form-2col"><div><label>Subject name</label><input id="f_name"></div><div><label>Code</label><input id="f_code" placeholder="MATH-11"></div></div>
+    <div class="form-2col"><div><label>Teacher</label><input id="f_teacher"></div><div><label>Credits</label><input id="f_credits" type="number" min="1" max="6" value="3"></div></div>
+    <div class="form-2col"><div><label>Students enrolled</label><input id="f_students" type="number" min="0" value="30"></div><div><label>Syllabus %</label><input id="f_progress" type="number" min="0" max="100" value="50"></div></div>
+  </div>
+  <footer><button class="ghost" id="cancelBtn">Cancel</button><button id="saveBtn">Save Subject</button></footer>
+</div></div>
+<script src="../js/config.js"></script><script src="../js/api.js"></script><script src="../js/guard.js"></script>
+<script src="../js/utils.js"></script><script src="../js/charts.js"></script><script src="../js/admin.js"></script>
+<script>
+requireRole(["admin"]);
+let editing = null;
+const get = () => load(LS.subjects, []), set = v => store(LS.subjects, v);
+const COLORS = ["#2c7be5", "#28a745", "#f0ad4e", "#6f42c1", "#d9534f", "#17a2b8"];
+function render() {
+  const q = document.getElementById("q").value.toLowerCase();
+  const all = get(), list = all.filter(s => (s.name + s.code + s.teacher).toLowerCase().includes(q));
+  document.getElementById("countBadge").textContent = all.length;
+  document.getElementById("totalStudents").textContent = all.reduce((a, s) => a + (s.students || 0), 0) + " total enrollments";
+  document.getElementById("grid").innerHTML = list.length ? list.map((s, i) => `
+    <div class="subj-card"><div class="top" style="background:${s.color || COLORS[i % COLORS.length]}"></div><div class="pad">
+      <div class="row" style="justify-content:space-between"><span class="badge neutral">${escapeHtml(s.code)}</span>
+        <span><button class="ghost sm" onclick="editSubject('${escapeHtml(s.code)}')">Edit</button> <button class="danger sm" onclick="delSubject('${escapeHtml(s.code)}')">✕</button></span></div>
+      <h3 style="margin-top:8px">${escapeHtml(s.name)}</h3>
+      <div class="muted" style="font-size:12px">👩‍🏫 ${escapeHtml(s.teacher)} · 🎓 ${s.credits} credits · 👥 ${s.students} students</div>
+      <div class="row" style="justify-content:space-between;margin:10px 0 4px"><small class="muted">Syllabus</small><b>${s.progress}%</b></div>
+      <div class="progress"><i style="width:${s.progress}%;background:${s.color || COLORS[i % COLORS.length]}"></i></div>
+    </div></div>`).join("") : `<p class="empty">No subjects found.</p>`;
+}
+function openModal(s) {
+  editing = s?.code || null;
+  document.getElementById("modalTitle").textContent = editing ? "Edit Subject" : "Add Subject";
+  document.getElementById("f_name").value = s?.name || ""; document.getElementById("f_code").value = s?.code || "";
+  document.getElementById("f_teacher").value = s?.teacher || ""; document.getElementById("f_credits").value = s?.credits ?? 3;
+  document.getElementById("f_students").value = s?.students ?? 30; document.getElementById("f_progress").value = s?.progress ?? 50;
+  document.getElementById("f_code").disabled = !!editing;
+  document.getElementById("modal").classList.add("open");
+}
+window.editSubject = code => openModal(get().find(s => s.code === code));
+window.delSubject = code => { if (!confirm("Delete " + code + "?")) return; set(get().filter(s => s.code !== code)); render(); toast("Subject deleted"); };
+document.addEventListener("DOMContentLoaded", () => {
+  render();
+  document.getElementById("q").addEventListener("input", render);
+  document.getElementById("addBtn").onclick = () => openModal();
+  document.getElementById("closeModal").onclick = document.getElementById("cancelBtn").onclick = () => document.getElementById("modal").classList.remove("open");
+  document.getElementById("exportBtn").onclick = () => downloadCSV("subjects.csv", get());
+  document.getElementById("saveBtn").onclick = () => {
+    const name = document.getElementById("f_name").value.trim(), code = document.getElementById("f_code").value.trim().toUpperCase();
+    if (!name || !code) return toast("Name & code required");
+    if (!/^[A-Z0-9-]{1,12}$/.test(code)) return toast("Code: A-Z, 0-9 and - only");
+    const rec = { code, name, teacher: document.getElementById("f_teacher").value.trim() || "TBD", credits: parseInt(document.getElementById("f_credits").value) || 3, students: parseInt(document.getElementById("f_students").value) || 0, progress: Math.min(100, parseInt(document.getElementById("f_progress").value) || 0), color: COLORS[get().length % COLORS.length] };
+    const all = get();
+    if (editing) { const ex = all.find(s => s.code === editing); rec.color = ex.color; Object.assign(ex, rec); }
+    else { if (all.some(s => s.code === code)) return toast("Code exists"); all.push(rec); }
+    set(all); document.getElementById("modal").classList.remove("open"); render(); toast("Subject saved ✓");
+  };
+});
+</script>
 </body>
 </html>

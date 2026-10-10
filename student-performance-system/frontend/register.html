@@ -3,22 +3,123 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register</title>
+  <title>Create account · EduPulse</title>
+  <meta name="description" content="Create your Student Performance System account — student, teacher or admin.">
+  <meta name="theme-color" content="#1f3a5f">
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/auth.css">
   <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>Register</h1>
-    <!-- TODO: page content -->
+<div class="auth-wrap">
+  <!-- Brand panel -->
+  <aside class="auth-brand" aria-label="Why join">
+    <div class="logo-row">
+      <img src="assets/images/logo.svg" alt="EduPulse logo">
+      <div><strong style="color:#fff">EduPulse</strong><br><small style="color:#9db1cc">Student Performance System</small></div>
+    </div>
+    <h2>Join 1,000+ educators predicting success early.</h2>
+    <p>Free to start. Set up your portal in under two minutes.</p>
+    <ul class="auth-points">
+      <li><span class="tick">✓</span><span>Personalized <b style="color:#fff">study recommendations</b> for every prediction.</span></li>
+      <li><span class="tick">✓</span><span>Early <b style="color:#fff">at-risk alerts</b> with contact tracking.</span></li>
+      <li><span class="tick">✓</span><span><b style="color:#fff">Reports & CSV export</b> for staff meetings.</span></li>
+    </ul>
+    <p style="margin-top:auto;font-size:12px">← <a href="index.html" style="color:#7db3f7">Back to home</a></p>
+  </aside>
+
+  <!-- Form -->
+  <main class="auth-main">
+    <div class="auth-card">
+      <h1>Create account</h1>
+      <p class="sub">Pick a role and you're in. No credit card required.</p>
+
+      <div class="auth-error" id="authError" role="alert" aria-live="assertive"></div>
+
+      <form id="registerForm" novalidate>
+        <div>
+          <label for="roleDisplay">I am a…</label>
+          <div class="role-grid" id="roleGrid" role="radiogroup" aria-label="Choose your role">
+            <div class="role-card" data-role="student" role="radio" tabindex="0" aria-checked="true"><span class="rico">🎓</span>Student</div>
+            <div class="role-card" data-role="teacher" role="radio" tabindex="0" aria-checked="false"><span class="rico">👩‍🏫</span>Teacher</div>
+            <div class="role-card" data-role="admin" role="radio" tabindex="0" aria-checked="false"><span class="rico">🛡</span>Admin</div>
+          </div>
+          <input type="hidden" id="role" name="role" value="student">
+        </div>
+
+        <div>
+          <label for="name">Full name</label>
+          <input type="text" id="name" name="name" placeholder="Aarav Sharma" autocomplete="name" required minlength="2">
+        </div>
+
+        <div>
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="you@school.edu" autocomplete="email" required>
+        </div>
+
+        <div class="form-2col">
+          <div>
+            <label for="password">Password</label>
+            <div class="pass-wrap">
+              <input type="password" id="password" name="password" placeholder="Min. 6 characters" autocomplete="new-password" required minlength="6">
+              <button type="button" class="pass-toggle" data-pass-toggle="password" aria-label="Show password">👁</button>
+            </div>
+          </div>
+          <div>
+            <label for="confirm">Confirm</label>
+            <input type="password" id="confirm" name="confirm" placeholder="Repeat it" autocomplete="new-password" required>
+          </div>
+        </div>
+
+        <div class="auth-row">
+          <label><input type="checkbox" id="terms" required> I agree to the <a href="index.html#security">terms & privacy</a></label>
+        </div>
+
+        <button type="submit" id="regBtn">Create account →</button>
+      </form>
+
+      <p class="auth-alt">Already have an account? <a href="login.html">Log in</a></p>
+    </div>
   </main>
-  <!-- Footer -->
+</div>
+
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/guard.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    document.querySelector('.role-card[data-role="student"]')?.classList.add("selected");
+
+    document.querySelectorAll(".role-card").forEach(c => {
+      const pick = () => {
+        document.querySelectorAll(".role-card").forEach(x => { x.classList.remove("selected"); x.setAttribute("aria-checked","false"); });
+        c.classList.add("selected"); c.setAttribute("aria-checked","true");
+        document.getElementById("role").value = c.dataset.role;
+      };
+      c.addEventListener("click", pick);
+      c.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+    });
+    bindPasswordToggles();
+
+    // Register with confirm-password + terms check, then delegate to auth.js
+    document.getElementById("registerForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const name = form.name.value.trim(), email = form.email.value.trim();
+      const pw = form.password.value, cf = document.getElementById("confirm").value;
+      if (!name || !email || !pw) return showAuthError("All fields are required.");
+      if (pw.length < 6) return showAuthError("Password must be at least 6 characters.");
+      if (pw !== cf) return showAuthError("Passwords do not match.");
+      if (!document.getElementById("terms").checked) return showAuthError("Please accept the terms to continue.");
+      const btn = document.getElementById("regBtn");
+      btn.disabled = true; btn.textContent = "Creating…";
+      register({ name, email, password: pw, role: document.getElementById("role").value || "student" })
+        .finally(() => { btn.disabled = false; btn.textContent = "Create account →"; });
+    });
+
+    try { if (isLoggedIn()) goToDashboard(getSession().role); } catch {}
+  </script>
 </body>
 </html>

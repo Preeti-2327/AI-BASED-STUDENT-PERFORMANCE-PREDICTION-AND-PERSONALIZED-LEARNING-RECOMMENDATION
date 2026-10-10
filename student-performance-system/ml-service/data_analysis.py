@@ -1,15 +1,22 @@
 import os
+import sys
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__))))
+from dataset import load_dataset
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Create graphs folder if it does not exist
 os.makedirs(os.path.join(BASE_DIR, "graphs"), exist_ok=True)
 
-# Load dataset
-data = pd.read_csv(os.path.join(BASE_DIR, "data", "student-mat.csv"), sep=";")
+# Load dataset from single source of truth (dataset.py)
+data, SCHEMA, DATA_PATH = load_dataset()
+TARGET = SCHEMA["target"]
+print(f"Dataset: {DATA_PATH} (schema={SCHEMA['name']}, target={TARGET})")
 
 print("Dataset loaded successfully!")
 

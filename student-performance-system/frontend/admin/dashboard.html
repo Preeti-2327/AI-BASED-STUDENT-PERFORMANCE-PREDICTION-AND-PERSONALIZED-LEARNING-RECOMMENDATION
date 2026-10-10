@@ -3,22 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard</title>
+  <title>Admin Dashboard · Student Performance System</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>Admin Dashboard</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/guard.js"></script>
-  <script src="../js/utils.js"></script>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img class="logo-img" src="../assets/images/logo.svg" alt="SPS logo"><div><strong>SPS Admin</strong><small>Performance System</small></div></div>
+    <nav class="nav">
+      <div class="nav-label">Overview</div>
+      <a href="dashboard.html" data-page="dashboard.html"><span class="ico">📊</span> Dashboard</a>
+      <a href="reports.html" data-page="reports.html"><span class="ico">📈</span> Reports</a>
+      <div class="nav-label">Manage</div>
+      <a href="manage-students.html" data-page="manage-students.html"><span class="ico">🧑‍🎓</span> Students</a>
+      <a href="manage-teachers.html" data-page="manage-teachers.html"><span class="ico">👩‍🏫</span> Teachers</a>
+      <a href="manage-subjects.html" data-page="manage-subjects.html"><span class="ico">📚</span> Subjects</a>
+      <div class="nav-label">System</div>
+      <a href="../index.html"><span class="ico">🏠</span> View Site</a>
+      <a href="#" data-logout><span class="ico">🚪</span> Logout</a>
+    </nav>
+    <div class="side-foot">© <span id="year"></span> SPS · v1.0</div>
+  </aside>
+  <div class="main-area">
+    <div class="topbar">
+      <button class="ghost sm menu-btn" id="menuBtn">☰</button>
+      <span class="title">Admin Dashboard</span>
+      <span class="spacer"></span>
+      <span class="badge info" id="backendStatus">checking backend…</span>
+      <div class="user-chip"><span class="avatar" id="avatarInit">A</span><span data-username>Admin</span></div>
+    </div>
+    <div class="content">
+      <div class="page-head">
+        <div><h1>Welcome back 👋</h1><p>Live overview of students, predictions & at-risk learners.</p></div>
+        <div class="toolbar"><button class="ghost" onclick="location.href='reports.html'">View Reports</button><button onclick="location.href='manage-students.html'">+ Add Student</button></div>
+      </div>
+      <section class="stats">
+        <div class="stat"><div class="icon" style="background:#e8f1fd">🧑‍🎓</div><div><b id="stStudents">0</b><span>Total Students</span><div class="trend up" id="stStudentsSub"></div></div></div>
+        <div class="stat"><div class="icon" style="background:#e3f5e9">👩‍🏫</div><div><b id="stTeachers">0</b><span>Teachers</span><div class="trend up">Active staff</div></div></div>
+        <div class="stat"><div class="icon" style="background:#fef3e2">📚</div><div><b id="stSubjects">0</b><span>Subjects</span><div class="trend up">Across grades</div></div></div>
+        <div class="stat"><div class="icon" style="background:#fdecea">⚠️</div><div><b id="stRisk">0</b><span>At-Risk Students</span><div class="trend down">Needs action</div></div></div>
+      </section>
+      <section class="panels">
+        <div class="panel"><header><h3>Performance Distribution</h3><span class="badge neutral" id="predCount">0 predictions</span></header><div class="pad"><canvas class="chart" id="perfChart"></canvas><div id="perfBars"></div></div></div>
+        <div class="panel"><header><h3>At-Risk Learners</h3><a href="reports.html">View all →</a></header><div class="pad" id="riskList"><p class="muted">Loading…</p></div></div>
+      </section>
+      <div class="panel"><header><h3>Recent Predictions</h3><a href="reports.html">Full history →</a></header><div class="table-wrap" style="border:0"><table><thead><tr><th>#</th><th>Student</th><th>Grade</th><th>Level</th><th>When</th></tr></thead><tbody id="recentRows"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody></table></div></div>
+      <p class="footer-note">Data: local directory + live Flask <code>/history</code> when backend is running.</p>
+    </div>
+  </div>
+</div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/guard.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+requireRole(["admin"]);
+document.addEventListener("DOMContentLoaded", async () => {
+  document.getElementById("avatarInit").textContent = initials(localStorage.getItem("username") || "Admin");
+  const students = load(LS.students, []), teachers = load(LS.teachers, []), subjects = load(LS.subjects, []);
+  document.getElementById("stStudents").textContent = students.length;
+  document.getElementById("stTeachers").textContent = teachers.length;
+  document.getElementById("stSubjects").textContent = subjects.length;
+  document.getElementById("stStudentsSub").textContent = subjects.length + " subjects tracked";
+  const history = await fetchHistory();
+  const live = history.length > 0;
+  document.getElementById("backendStatus").textContent = live ? "● backend live" : "○ backend offline (demo)";
+  document.getElementById("backendStatus").className = "badge " + (live ? "ok" : "neutral");
+  const levels = ["Needs Improvement", "Average", "Good", "Excellent"];
+  const colors = ["#d9534f", "#f0ad4e", "#2c7be5", "#28a745"];
+  let counts;
+  if (live) {
+    counts = levels.map(l => history.filter(h => h.performance_level === l).length);
+  } else {
+    counts = levels.map(l => students.filter(s => s.level === l).length);
+  }
+  document.getElementById("predCount").textContent = (live ? history.length + " predictions" : students.length + " demo records");
+  drawBarChart(document.getElementById("perfChart"), ["At Risk", "Average", "Good", "Excel."], counts);
+  document.getElementById("perfBars").innerHTML = levels.map((l, i) =>
+    `<div class="hbar"><span>${l}</span><div class="bar"><i style="width:${counts[i] / Math.max(...counts, 1) * 100}%;background:${colors[i]}"></i></div><b>${counts[i]}</b></div>`).join("");
+  // at-risk
+  const risk = live ? history.filter(h => h.performance_level === "Needs Improvement").slice(0, 5)
+                    : students.filter(s => s.level === "Needs Improvement").slice(0, 5);
+  document.getElementById("stRisk").textContent = live
+    ? history.filter(h => h.performance_level === "Needs Improvement").length
+    : students.filter(s => s.level === "Needs Improvement").length;
+  document.getElementById("riskList").innerHTML = risk.length ? risk.map(r => {
+    const name = r.student_data ? (r.student_data.name || r.student_data.sex + " · age " + r.student_data.age) : r.name;
+    const grade = r.predicted_grade ?? r.avg ?? "-";
+    return `<div class="row" style="justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f3f8">
+      <div class="row"><span class="avatar">${initials(name)}</span><div><b>${escapeHtml(name)}</b><div class="muted" style="font-size:12px">Grade ${grade}</div></div></div>
+      ${levelBadge(r.performance_level || r.level)}</div>`;
+  }).join("") : `<p class="empty">🎉 No at-risk students. Great!</p>`;
+  // recent
+  const recent = live ? history.slice(0, 6) : students.slice(0, 6).map(s => ({ student_data: { name: s.name }, predicted_grade: s.avg, performance_level: s.level, created_at: new Date().toISOString() }));
+  document.getElementById("recentRows").innerHTML = recent.map((r, i) => { const nm = r.student_data?.name || "Student " + (r.id || ""); return `<tr><td>${i + 1}</td>
+    <td><div class="row"><span class="avatar">${initials(nm)}</span><b>${escapeHtml(nm)}</b></div></td>
+    <td><b>${r.predicted_grade}</b> / 20</td><td>${levelBadge(r.performance_level)}</td><td class="muted">${fmtDate(r.created_at)}</td></tr>`; }).join("");
+});
+</script>
 </body>
 </html>

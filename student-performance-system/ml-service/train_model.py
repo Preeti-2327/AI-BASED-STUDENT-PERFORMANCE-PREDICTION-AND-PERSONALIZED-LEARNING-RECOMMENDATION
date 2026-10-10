@@ -1,54 +1,43 @@
 import os
-import pandas as pd
-import joblib
+import sys
 
-from sklearn.model_selection import train_test_split
+import joblib
+import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from dataset import encode_features, load_dataset
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_PATH = os.path.join(BASE_DIR, "data", "student-mat.csv")
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 
 # --------------------------------------------------
-# 1. Load Dataset
+# 1. Load Dataset (single source: dataset.py)
 # --------------------------------------------------
 
-data = pd.read_csv(DATA_PATH, sep=";")
+data, SCHEMA, DATA_PATH = load_dataset()
+TARGET = SCHEMA["target"]
 
-print("Dataset loaded successfully!")
+print(f"Dataset: {DATA_PATH}")
+print(f"Schema: {SCHEMA['name']}, target: {TARGET} (0-{SCHEMA['scale_max']})")
 print("Dataset shape:", data.shape)
 
 
 # --------------------------------------------------
-# 2. Remove G1 and G2
+# 2-3. Features / Target (schema-driven, no leakage cols)
 # --------------------------------------------------
 
-data = data.drop(columns=["G1", "G2"])
+y = data[TARGET]
+X = encode_features(data, SCHEMA)
 
-
-# --------------------------------------------------
-# 3. Separate Features and Target
-# --------------------------------------------------
-
-X = data.drop(columns=["G3"])
-y = data["G3"]
-
-print("\nTarget: G3 - Final Grade")
-
-
-# --------------------------------------------------
-# 4. Convert Categorical Data into Numbers
-# --------------------------------------------------
-
-X = pd.get_dummies(X, drop_first=True)
-
+print(f"\nTarget: {TARGET}")
 print("Number of features after encoding:", X.shape[1])
 
 
 # --------------------------------------------------
-# 5. Split Dataset
+# 4. Split Dataset
 # --------------------------------------------------
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -63,18 +52,13 @@ print("Testing data:", X_test.shape)
 
 
 # --------------------------------------------------
-# 6. Create Random Forest Model
+# 5. Train Random Forest Model
 # --------------------------------------------------
 
 model = RandomForestRegressor(
     n_estimators=200,
     random_state=42
 )
-
-
-# --------------------------------------------------
-# 7. Train Model
-# --------------------------------------------------
 
 print("\nTraining Random Forest model...")
 
@@ -84,15 +68,10 @@ print("Model training completed!")
 
 
 # --------------------------------------------------
-# 8. Make Predictions
+# 6. Evaluate Model
 # --------------------------------------------------
 
 y_pred = model.predict(X_test)
-
-
-# --------------------------------------------------
-# 9. Evaluate Model
-# --------------------------------------------------
 
 mae = mean_absolute_error(y_test, y_pred)
 
@@ -113,7 +92,7 @@ print("R2 Score:", round(r2, 2))
 
 
 # --------------------------------------------------
-# 10. Compare Actual vs Predicted
+# 7. Compare Actual vs Predicted
 # --------------------------------------------------
 
 results = pd.DataFrame({
@@ -126,25 +105,15 @@ print(results.head(10))
 
 
 # --------------------------------------------------
-# 11. Create models folder
+# 8. Save Model + Feature Names + Schema
 # --------------------------------------------------
 
 os.makedirs(MODELS_DIR, exist_ok=True)
-
-
-# --------------------------------------------------
-# 12. Save Model
-# --------------------------------------------------
 
 joblib.dump(model, os.path.join(MODELS_DIR, "student_performance_model.pkl"))
 
 print("\nModel saved successfully!")
 print("Location: models/student_performance_model.pkl")
-
-
-# --------------------------------------------------
-# 13. Save Feature Names
-# --------------------------------------------------
 
 joblib.dump(
     X.columns.tolist(),
@@ -153,3 +122,11 @@ joblib.dump(
 
 print("Feature columns saved successfully!")
 print("Location: models/feature_columns.pkl")
+
+joblib.dump(
+    {"schema": SCHEMA["name"], "target": TARGET, "scale_max": SCHEMA["scale_max"]},
+    os.path.join(MODELS_DIR, "schema_meta.pkl"),
+)
+
+print("Schema meta saved successfully!")
+print("Location: models/schema_meta.pkl")

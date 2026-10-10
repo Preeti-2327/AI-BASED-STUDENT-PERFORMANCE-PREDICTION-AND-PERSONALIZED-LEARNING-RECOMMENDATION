@@ -3,22 +3,122 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login</title>
+  <title>Log in · EduPulse</title>
+  <meta name="description" content="Log in to the Student Performance System — admin, teacher and student portals.">
+  <meta name="theme-color" content="#1f3a5f">
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/auth.css">
   <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>Login</h1>
-    <!-- TODO: page content -->
+<div class="auth-wrap">
+  <!-- Brand panel -->
+  <aside class="auth-brand" aria-label="Product overview">
+    <div class="logo-row">
+      <img src="assets/images/logo.svg" alt="EduPulse logo">
+      <div><strong style="color:#fff">EduPulse</strong><br><small style="color:#9db1cc">Student Performance System</small></div>
+    </div>
+    <h2>Welcome back. Your classroom intelligence is ready.</h2>
+    <p>Predict grades, support at-risk learners, and personalize every study plan.</p>
+    <ul class="auth-points">
+      <li><span class="tick">✓</span><span><b style="color:#fff">AI grade forecasts</b> with clear explanations, not black boxes.</span></li>
+      <li><span class="tick">✓</span><span><b style="color:#fff">Role-based portals</b> for admins, teachers and students.</span></li>
+      <li><span class="tick">✓</span><span><b style="color:#fff">Works everywhere</b> — desktop, tablet and mobile.</span></li>
+    </ul>
+    <p style="margin-top:auto;font-size:12px">← <a href="index.html" style="color:#7db3f7">Back to home</a></p>
+  </aside>
+
+  <!-- Form -->
+  <main class="auth-main">
+    <div class="auth-card">
+      <h1>Log in</h1>
+      <p class="sub">Access your dashboard. Demo? Use any email + password.</p>
+
+      <div class="auth-error" id="authError" role="alert" aria-live="assertive"></div>
+
+      <form id="loginForm" novalidate>
+        <div>
+          <label for="roleDisplay">Sign in as</label>
+          <div class="role-grid" id="roleGrid" role="radiogroup" aria-label="Choose your role">
+            <div class="role-card" data-role="student" role="radio" tabindex="0" aria-checked="false"><span class="rico">🎓</span>Student</div>
+            <div class="role-card" data-role="teacher" role="radio" tabindex="0" aria-checked="false"><span class="rico">👩‍🏫</span>Teacher</div>
+            <div class="role-card" data-role="admin" role="radio" tabindex="0" aria-checked="false"><span class="rico">🛡</span>Admin</div>
+          </div>
+          <input type="hidden" id="role" name="role" value="student">
+        </div>
+
+        <div>
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="you@school.edu" autocomplete="email" required>
+        </div>
+
+        <div>
+          <label for="password">Password</label>
+          <div class="pass-wrap">
+            <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+            <button type="button" class="pass-toggle" data-pass-toggle="password" aria-label="Show password">👁</button>
+          </div>
+        </div>
+
+        <div class="auth-row">
+          <label><input type="checkbox" id="remember" checked> Remember me</label>
+          <a href="register.html">Forgot password?</a>
+        </div>
+
+        <button type="submit" id="loginBtn">Log in →</button>
+
+        <div class="divider">or try a demo role</div>
+        <div class="row" style="display:flex;gap:8px">
+          <button type="button" class="ghost sm" style="flex:1" data-demo="student">🎓 Student</button>
+          <button type="button" class="ghost sm" style="flex:1" data-demo="teacher">👩‍🏫 Teacher</button>
+          <button type="button" class="ghost sm" style="flex:1" data-demo="admin">🛡 Admin</button>
+        </div>
+      </form>
+
+      <p class="auth-alt">New here? <a href="register.html">Create an account</a></p>
+    </div>
   </main>
-  <!-- Footer -->
+</div>
+
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/guard.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // Pre-select default role + wire validation/submit via auth.js
+    document.querySelector('.role-card[data-role="student"]')?.classList.add("selected");
+    handleLoginForm("loginForm");
+
+    // Keyboard-accessible role cards
+    document.querySelectorAll(".role-card").forEach(c => {
+      const pick = () => {
+        document.querySelectorAll(".role-card").forEach(x => { x.classList.remove("selected"); x.setAttribute("aria-checked","false"); });
+        c.classList.add("selected"); c.setAttribute("aria-checked","true");
+        document.getElementById("role").value = c.dataset.role;
+      };
+      c.addEventListener("click", pick);
+      c.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+    });
+
+    // One-click demo logins
+    document.querySelectorAll("[data-demo]").forEach(b => b.addEventListener("click", () => {
+      const role = b.dataset.demo;
+      saveSession({ token: "demo-token", role, username: "demo-" + role });
+      toast("Demo mode — signed in as " + role);
+      goToDashboard(role);
+    }));
+
+    // Loading state on submit
+    document.getElementById("loginForm").addEventListener("submit", () => {
+      const btn = document.getElementById("loginBtn");
+      btn.disabled = true; btn.textContent = "Signing in…";
+      setTimeout(() => { btn.disabled = false; btn.textContent = "Log in →"; }, 3000);
+    });
+
+    // Already signed in? skip
+    try { if (isLoggedIn()) goToDashboard(getSession().role); } catch {}
+  </script>
 </body>
 </html>

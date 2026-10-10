@@ -3,22 +3,73 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Students</title>
+  <title>Students · SPS Teacher</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>My Students</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/guard.js"></script>
-  <script src="../js/utils.js"></script>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img class="logo-img" src="../assets/images/logo.svg" alt="SPS logo"><div><strong>SPS Teacher</strong><small>Classroom Portal</small></div></div>
+    <nav class="nav">
+      <div class="nav-label">Classroom</div>
+      <a href="dashboard.html" data-page="dashboard.html"><span class="ico">📊</span> Dashboard</a>
+      <a href="students.html" data-page="students.html"><span class="ico">🧑‍🎓</span> Students</a>
+      <a href="add-marks.html" data-page="add-marks.html"><span class="ico">📝</span> Add Marks</a>
+      <a href="at-risk.html" data-page="at-risk.html"><span class="ico">⚠️</span> At-Risk</a>
+      <a href="attendance.html" data-page="attendance.html"><span class="ico">✅</span> Attendance</a>
+      <div class="nav-label">System</div>
+      <a href="../index.html"><span class="ico">🏠</span> View Site</a>
+      <a href="#" data-logout><span class="ico">🚪</span> Logout</a>
+    </nav>
+    <div class="side-foot">© <span id="year"></span> SPS · v1.0</div>
+  </aside>
+  <div class="main-area">
+    <div class="topbar"><button class="ghost sm menu-btn" id="menuBtn">☰</button><span class="title">My Students</span><span class="spacer"></span><div class="user-chip"><span class="avatar">T</span><span data-username>Teacher</span></div></div>
+    <div class="content">
+      <div class="page-head"><div><h1>Class Roster <span class="badge info" id="countBadge">0</span></h1><p>Read-only roster from the school directory. Edits happen in Admin.</p></div>
+        <div class="toolbar"><button class="ghost" id="exportBtn">⬇ Export CSV</button></div></div>
+      <div class="card mb-2"><div class="toolbar"><div class="search"><input id="q" placeholder="Search name, id…"></div>
+        <select id="levelFilter" style="max-width:190px"><option value="">All levels</option><option>Excellent</option><option>Good</option><option>Average</option><option>Needs Improvement</option></select>
+        <span class="spacer"></span><span class="muted" id="showing"></span></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Student</th><th>Class</th><th>Avg / 20</th><th>Level</th><th>Marked Att.</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+    </div>
+  </div>
+</div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/guard.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/teacher.js"></script>
+<script>
+Teacher.seedDemo();
+requireRole(["teacher"]);
+function render() {
+  const q = document.getElementById("q").value, lf = document.getElementById("levelFilter").value;
+  const all = Teacher.roster();
+  const list = Teacher.searchRoster(q).filter(s => !lf || s.level === lf);
+  document.getElementById("countBadge").textContent = all.length;
+  document.getElementById("showing").textContent = `Showing ${list.length} of ${all.length}`;
+  document.getElementById("rows").innerHTML = list.length ? list.map(s => {
+    const pct = Teacher.attendancePct(s.id);
+    return `<tr>
+      <td><div class="row"><span class="avatar">${initials(s.name)}</span><div><b>${escapeHtml(s.name)}</b><div class="muted" style="font-size:12px">${escapeHtml(s.id)}</div></div></div></td>
+      <td><span class="badge neutral">${escapeHtml(s.grade || "-")}</span></td>
+      <td><b>${s.avg ?? "-"}</b></td><td>${levelBadge(s.level)}</td>
+      <td class="muted">${pct === null ? "not marked" : pct + "%"}</td>
+      <td style="text-align:right"><button class="ghost sm" onclick="location.href='add-marks.html?id=${encodeURIComponent(s.id)}'">+ Marks</button></td></tr>`;
+  }).join("") : `<tr><td colspan="6" class="empty">No students match.</td></tr>`;
+}
+document.addEventListener("DOMContentLoaded", () => {
+  Teacher.bindShell();
+  render();
+  document.getElementById("q").addEventListener("input", render);
+  document.getElementById("levelFilter").addEventListener("input", render);
+  document.getElementById("exportBtn").onclick = () => downloadCSV("class-roster.csv", Teacher.roster());
+});
+</script>
 </body>
 </html>

@@ -3,22 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>At-Risk Students</title>
+  <title>At-Risk Students · SPS Teacher</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>At-Risk Students</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/guard.js"></script>
-  <script src="../js/utils.js"></script>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img class="logo-img" src="../assets/images/logo.svg" alt="SPS logo"><div><strong>SPS Teacher</strong><small>Classroom Portal</small></div></div>
+    <nav class="nav">
+      <div class="nav-label">Classroom</div>
+      <a href="dashboard.html" data-page="dashboard.html"><span class="ico">📊</span> Dashboard</a>
+      <a href="students.html" data-page="students.html"><span class="ico">🧑‍🎓</span> Students</a>
+      <a href="add-marks.html" data-page="add-marks.html"><span class="ico">📝</span> Add Marks</a>
+      <a href="at-risk.html" data-page="at-risk.html"><span class="ico">⚠️</span> At-Risk</a>
+      <a href="attendance.html" data-page="attendance.html"><span class="ico">✅</span> Attendance</a>
+      <div class="nav-label">System</div>
+      <a href="../index.html"><span class="ico">🏠</span> View Site</a>
+      <a href="#" data-logout><span class="ico">🚪</span> Logout</a>
+    </nav>
+    <div class="side-foot">© <span id="year"></span> SPS · v1.0</div>
+  </aside>
+  <div class="main-area">
+    <div class="topbar"><button class="ghost sm menu-btn" id="menuBtn">☰</button><span class="title">At-Risk Students</span><span class="spacer"></span><span class="badge danger" id="countBadge">0</span><div class="user-chip"><span class="avatar">T</span><span data-username>Teacher</span></div></div>
+    <div class="content">
+      <div class="page-head"><div><h1>Early Intervention ⚠️</h1><p>Live predictions flagged "Needs Improvement" — contact and support them early.</p></div>
+        <div class="toolbar"><button class="ghost" id="exportBtn">⬇ Export CSV</button></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Student</th><th>Grade</th><th>Signals</th><th>Contacted</th><th style="text-align:right">Action</th></tr></thead><tbody id="rows"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody></table></div>
+      <div class="panel mt-2"><header><h3>Intervention playbook</h3></header><div class="pad muted" style="font-size:13px;display:grid;gap:8px">
+        <div>1️⃣ Talk 1-on-1 within 48 hours — find the blocker (attendance? basics? home?).</div>
+        <div>2️⃣ Assign 2 weeks of focused basics + daily 25-min revision.</div>
+        <div>3️⃣ Re-run <a href="add-marks.html">prediction</a> after 2 weeks to measure lift.</div>
+      </div></div>
+    </div>
+  </div>
+</div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/guard.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/teacher.js"></script>
+<script>
+Teacher.seedDemo();
+requireRole(["teacher"]);
+const CONTACT_KEY = "sps_contacted";
+const contacted = () => load(CONTACT_KEY, {});
+function render(list) {
+  const done = contacted();
+  document.getElementById("countBadge").textContent = list.length;
+  document.getElementById("rows").innerHTML = list.length ? list.map((r, i) => {
+    const key = String(r.id || r.student_data?.email || i);
+    const name = r.student_data ? `Record #${r.id} · ${r.student_data.sex === "F" ? "Girl" : "Boy"}, ${r.student_data.age}y · ${r.student_data.absences} absences` : `${r.name} · ${r.id}`;
+    const signals = r.student_data
+      ? [`${r.student_data.absences} absences`, `study ${r.student_data.studytime}/4`, r.student_data.failures ? r.student_data.failures + " failures" : "no failures"].join(" · ")
+      : `attendance ${r.attendance}% · avg ${r.avg}`;
+    return `<tr>
+      <td><div class="row"><span class="avatar">${initials(name)}</span><b>${escapeHtml(name)}</b></div></td>
+      <td><b>${r.predicted_grade ?? r.avg ?? "-"}</b> / 20</td>
+      <td class="muted" style="font-size:12px">${escapeHtml(signals)}</td>
+      <td>${done[key] ? '<span class="badge ok">✓ contacted</span>' : '<span class="badge neutral">pending</span>'}</td>
+      <td style="text-align:right;white-space:nowrap"><button class="ghost sm" onclick="toggleContact('${key}')">${done[key] ? "Undo" : "Mark contacted"}</button></td></tr>`;
+  }).join("") : `<tr><td colspan="5" class="empty">🎉 No at-risk students. Great!</td></tr>`;
+}
+window.toggleContact = (key) => {
+  const done = contacted();
+  done[key] ? delete done[key] : done[key] = new Date().toISOString();
+  store(CONTACT_KEY, done);
+  render(window._risk || []);
+};
+document.addEventListener("DOMContentLoaded", async () => {
+  Teacher.bindShell();
+  window._risk = await Teacher.atRisk();
+  render(window._risk);
+  document.getElementById("exportBtn").onclick = () => downloadCSV("at-risk.csv",
+    window._risk.map(r => ({ id: r.id, grade: r.predicted_grade ?? r.avg, absences: r.student_data?.absences ?? "", contacted: contacted()[String(r.id)] || "" })));
+});
+</script>
 </body>
 </html>

@@ -3,22 +3,107 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile</title>
+  <title>Profile · SPS Student</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>Profile</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/guard.js"></script>
-  <script src="../js/utils.js"></script>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img class="logo-img" src="../assets/images/logo.svg" alt="SPS logo"><div><strong>SPS Student</strong><small>Learning Portal</small></div></div>
+    <nav class="nav">
+      <div class="nav-label">Learn</div>
+      <a href="dashboard.html" data-page="dashboard.html"><span class="ico">📊</span> Dashboard</a>
+      <a href="prediction.html" data-page="prediction.html"><span class="ico">🔮</span> New Prediction</a>
+      <a href="my-marks.html" data-page="my-marks.html"><span class="ico">📝</span> My Marks</a>
+      <a href="recommendations.html" data-page="recommendations.html"><span class="ico">🎯</span> Recommendations</a>
+      <div class="nav-label">Me</div>
+      <a href="study-habits.html" data-page="study-habits.html"><span class="ico">📚</span> Study Habits</a>
+      <a href="history.html" data-page="history.html"><span class="ico">🕘</span> History</a>
+      <a href="profile.html" data-page="profile.html"><span class="ico">👤</span> Profile</a>
+      <div class="nav-label">System</div>
+      <a href="../index.html"><span class="ico">🏠</span> View Site</a>
+      <a href="#" data-logout><span class="ico">🚪</span> Logout</a>
+    </nav>
+    <div class="side-foot">© <span id="year"></span> SPS · v1.0</div>
+  </aside>
+  <div class="main-area">
+    <div class="topbar"><button class="ghost sm menu-btn" id="menuBtn">☰</button><span class="title">My Profile</span><span class="spacer"></span><div class="user-chip"><span class="avatar">S</span><span data-username>Student</span></div></div>
+    <div class="content">
+      <div class="page-head"><div><h1>My Profile 👤</h1><p>Saved locally in this browser (demo mode).</p></div></div>
+      <div class="panels" style="grid-template-columns:1fr 1fr">
+        <div class="panel"><header><h3>Edit Details</h3></header><div class="pad">
+          <form id="profileForm" style="display:grid;gap:12px">
+            <div class="row"><span class="avatar" id="avatarBig" style="width:52px;height:52px;font-size:18px">S</span><div><b id="previewName">Student</b><div class="muted" style="font-size:12px" id="previewEmail">–</div></div></div>
+            <div><label>Full name</label><input id="p_name"></div>
+            <div><label>Email</label><input id="p_email" type="email"></div>
+            <div><label>Class</label><select id="p_grade"><option>9-A</option><option>9-B</option><option>10-A</option><option>10-B</option></select></div>
+            <button type="submit">Save Profile</button>
+          </form>
+        </div></div>
+        <div>
+          <div class="panel mb-2"><header><h3>Session</h3></header><div class="pad" id="sessionBox" style="display:grid;gap:8px;font-size:13px"></div></div>
+          <div class="panel"><header><h3>Account Actions</h3></header><div class="pad" style="display:grid;gap:10px">
+            <button class="ghost" id="logoutBtn">🚪 Logout</button>
+            <button class="danger" id="wipeBtn">🗑 Clear my local data</button>
+            <p class="muted" style="font-size:12px">Clearing removes profile, study plan and demo directory from this browser only. Backend predictions are unaffected.</p>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/guard.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/student.js"></script>
+<script>
+Student.seedDemo();
+requireRole(["student"]);
+document.addEventListener("DOMContentLoaded", () => {
+  Student.bindShell();
+  const me = Student.getProfile();
+  document.getElementById("p_name").value = me.name || "";
+  document.getElementById("p_email").value = me.email || "";
+  document.getElementById("p_grade").value = me.grade || "10-A";
+  const paint = (p) => {
+    document.getElementById("previewName").textContent = p.name;
+    document.getElementById("previewEmail").textContent = `${p.email} · ${p.grade}`;
+    document.getElementById("avatarBig").textContent = initials(p.name);
+  };
+  paint(me);
+  ["p_name", "p_email", "p_grade"].forEach(id =>
+    document.getElementById(id).addEventListener("input", () => paint({
+      name: document.getElementById("p_name").value || "Student",
+      email: document.getElementById("p_email").value || "–",
+      grade: document.getElementById("p_grade").value,
+    })));
+  document.getElementById("profileForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = document.getElementById("p_name").value.trim();
+    if (!name) return toast("Name is required");
+    const next = Student.saveProfile({ name, email: document.getElementById("p_email").value.trim(), grade: document.getElementById("p_grade").value });
+    localStorage.setItem("username", next.name);
+    document.querySelectorAll("[data-username]").forEach(el => el.textContent = next.name);
+    paint(next);
+  });
+  const s = { role: localStorage.getItem("role"), token: localStorage.getItem("token") ? "active" : "missing" };
+  document.getElementById("sessionBox").innerHTML = `
+    <div class="row" style="justify-content:space-between"><span class="muted">Role</span><span class="badge info">${escapeHtml(s.role || "-")}</span></div>
+    <div class="row" style="justify-content:space-between"><span class="muted">Session</span><span class="badge ok">${s.token}</span></div>
+    <div class="row" style="justify-content:space-between"><span class="muted">Backend</span><code style="font-size:11px">${ENDPOINTS.history}</code></div>`;
+  document.getElementById("logoutBtn").onclick = () => logout();
+  document.getElementById("wipeBtn").onclick = () => {
+    if (!confirm("Clear all local SPS data in this browser?")) return;
+    ["sps_student_profile", "sps_study_habits", "sps_students", "sps_teachers", "sps_subjects"].forEach(k => localStorage.removeItem(k));
+    toast("Local data cleared");
+    setTimeout(() => location.reload(), 800);
+  };
+});
+</script>
 </body>
 </html>

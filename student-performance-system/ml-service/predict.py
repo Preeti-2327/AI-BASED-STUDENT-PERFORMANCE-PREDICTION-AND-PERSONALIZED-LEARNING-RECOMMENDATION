@@ -1,14 +1,18 @@
 import os
-import pandas as pd
-import joblib
+import sys
 
+import joblib
+import pandas as pd
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from dataset import encode_features, level_for, load_dataset
 from recommender import generate_recommendations
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # --------------------------------------------------
-# 1. Load trained model
+# 1. Load trained model + schema
 # --------------------------------------------------
 
 model = joblib.load(
@@ -19,116 +23,67 @@ feature_columns = joblib.load(
     os.path.join(BASE_DIR, "models", "feature_columns.pkl")
 )
 
-print("Model loaded successfully!")
+_, SCHEMA, DATA_PATH = load_dataset()
+SCALE_MAX = SCHEMA["scale_max"]
+
+print(f"Model loaded successfully! (schema={SCHEMA['name']}, target={SCHEMA['target']})")
 
 
 # --------------------------------------------------
-# 2. Student information
+# 2. Student information (schema defaults from dataset)
 # --------------------------------------------------
 
-student = {
-    "school": "GP",
-    "sex": "F",
-    "age": 17,
-    "address": "U",
-    "famsize": "GT3",
-    "Pstatus": "A",
-    "Medu": 3,
-    "Fedu": 3,
-    "Mjob": "services",
-    "Fjob": "services",
-    "reason": "course",
-    "guardian": "mother",
-    "traveltime": 1,
-    "studytime": 3,
-    "failures": 0,
-    "schoolsup": "yes",
-    "famsup": "yes",
-    "paid": "no",
-    "activities": "yes",
-    "nursery": "yes",
-    "higher": "yes",
-    "internet": "yes",
-    "romantic": "no",
-    "famrel": 4,
-    "freetime": 3,
-    "goout": 3,
-    "Dalc": 1,
-    "Walc": 1,
-    "health": 4,
-    "absences": 4
-}
+if SCHEMA["name"] == "kaggle":
+    student = {
+        "Hours_Studied": 20, "Attendance": 85, "Parental_Involvement": "Medium",
+        "Access_to_Resources": "Medium", "Extracurricular_Activities": "Yes",
+        "Sleep_Hours": 7, "Previous_Scores": 70, "Motivation_Level": "Medium",
+        "Internet_Access": "Yes", "Tutoring_Sessions": 1, "Family_Income": "Medium",
+        "Teacher_Quality": "Medium", "School_Type": "Public",
+        "Peer_Influence": "Neutral", "Physical_Activity": "Medium",
+        "Learning_Disabilities": "No", "Parental_Education_Level": "College",
+        "Distance_from_Home": "Moderate", "Gender": "Female",
+    }
+else:
+    student = {
+        "school": "GP", "sex": "F", "age": 17, "address": "U",
+        "famsize": "GT3", "Pstatus": "A", "Medu": 3, "Fedu": 3,
+        "Mjob": "services", "Fjob": "services", "reason": "course",
+        "guardian": "mother", "traveltime": 1, "studytime": 3,
+        "failures": 0, "schoolsup": "yes", "famsup": "yes", "paid": "no",
+        "activities": "yes", "nursery": "yes", "higher": "yes",
+        "internet": "yes", "romantic": "no", "famrel": 4, "freetime": 3,
+        "goout": 3, "Dalc": 1, "Walc": 1, "health": 4, "absences": 4,
+    }
 
 
 # --------------------------------------------------
-# 3. Convert to DataFrame
+# 3-5. Encode (shared logic) + predict
 # --------------------------------------------------
 
-student_df = pd.DataFrame([student])
-
-
-# --------------------------------------------------
-# 4. One-Hot Encoding
-# --------------------------------------------------
-
-student_df = pd.get_dummies(
-    student_df,
-    drop_first=True
-)
-
-
-# --------------------------------------------------
-# 5. Match training columns
-# --------------------------------------------------
-
-student_df = student_df.reindex(
-    columns=feature_columns,
-    fill_value=0
-)
-
-
-# --------------------------------------------------
-# 6. Predict grade
-# --------------------------------------------------
+student_df = encode_features(pd.DataFrame([student]), SCHEMA, feature_columns)
 
 prediction = model.predict(student_df)[0]
 
-prediction = round(prediction, 2)
+prediction = round(max(0.0, min(float(SCALE_MAX), float(prediction))), 2)
 
 
 # --------------------------------------------------
-# 7. Determine performance level
+# 6. Level + recommendations
 # --------------------------------------------------
 
-if prediction < 10:
-
-    level = "Needs Improvement"
-
-elif prediction < 13:
-
-    level = "Average"
-
-elif prediction < 16:
-
-    level = "Good"
-
-else:
-
-    level = "Excellent"
-
-
-# --------------------------------------------------
-# 8. Generate recommendations
-# --------------------------------------------------
+level = level_for(prediction, SCHEMA)
 
 recommendations = generate_recommendations(
     student,
-    prediction
+    prediction,
+    scale_max=SCALE_MAX,
+    level=level
 )
 
 
 # --------------------------------------------------
-# 9. Display results
+# 7. Display results
 # --------------------------------------------------
 
 print("\n===================================")
@@ -136,7 +91,7 @@ print(" STUDENT PERFORMANCE REPORT")
 print("===================================")
 
 print("\nPredicted Final Grade:")
-print(prediction, "/ 20")
+print(prediction, f"/ {SCALE_MAX}")
 
 print("\nPerformance Level:")
 print(level)

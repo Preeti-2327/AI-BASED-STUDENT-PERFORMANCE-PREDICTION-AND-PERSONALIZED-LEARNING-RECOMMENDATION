@@ -1,1 +1,64 @@
-/* login/register styles */
+/* ============================================================
+   SPS · auth.css — public pages (login / register / home hero)
+   Depends on: style.css (tokens + buttons + forms).
+   Load order: style.css → auth.css → responsive.css
+   Sections: 1 layout · 2 brand panel · 3 form card
+   4 role picker · 5 options · 6 hero (home)
+   ============================================================ */
+
+/* ---------- 1. Auth layout ---------- */
+.auth-wrap { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; background: var(--bg); }
+.auth-main { display: flex; align-items: center; justify-content: center; padding: 32px 24px; }
+
+/* ---------- 2. Brand panel (left) ---------- */
+.auth-brand { background: linear-gradient(160deg, var(--primary) 0%, var(--primary-dark) 70%); color: #dbe4f0; padding: 48px 44px; display: flex; flex-direction: column; justify-content: center; gap: 18px; position: relative; overflow: hidden; }
+.auth-brand::after { content: ""; position: absolute; width: 340px; height: 340px; border-radius: 50%; background: rgba(44, 123, 229, 0.25); right: -120px; bottom: -120px; }
+.auth-brand .logo-row { display: flex; align-items: center; gap: 12px; }
+.auth-brand .logo-row img { width: 44px; height: 44px; border-radius: 11px; }
+.auth-brand h2 { color: #fff; font-size: 28px; line-height: 1.25; max-width: 420px; }
+.auth-brand p { color: #9db1cc; font-size: 14px; max-width: 420px; }
+.auth-points { list-style: none; display: grid; gap: 12px; margin-top: 8px; position: relative; z-index: 1; }
+.auth-points li { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; }
+.auth-points .tick { width: 24px; height: 24px; border-radius: 50%; background: rgba(40, 167, 69, 0.25); color: #7ddb9a; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+
+/* ---------- 3. Form card (right) ---------- */
+.auth-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-lg); padding: 32px; width: 100%; max-width: 420px; }
+.auth-card h1 { font-size: 22px; color: var(--primary); }
+.auth-card .sub { color: var(--muted); font-size: 13px; margin: 4px 0 20px; }
+.auth-card form { display: grid; gap: 14px; }
+.auth-card button[type="submit"] { width: 100%; padding: 12px; font-size: 15px; }
+.auth-error { display: none; background: #fdecea; color: #b03a36; border: 1px solid #f5c6c3; font-size: 13px; padding: 10px 12px; border-radius: 8px; }
+.auth-error.show { display: block; }
+.auth-alt { text-align: center; font-size: 13px; color: var(--muted); margin-top: 16px; }
+
+/* ---------- 4. Role picker ---------- */
+.role-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.role-card { border: 1.5px solid var(--border); border-radius: 10px; padding: 12px 6px; text-align: center; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--muted); background: #fff; transition: border-color 0.15s, background 0.15s; }
+.role-card .rico { font-size: 22px; display: block; margin-bottom: 4px; }
+.role-card:hover { border-color: var(--accent); }
+.role-card.selected { border-color: var(--accent); background: var(--accent-soft); color: var(--primary); }
+
+/* ---------- 5. Options row / password ---------- */
+.auth-row { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; color: var(--muted); }
+.auth-row label { display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer; }
+.auth-row input[type="checkbox"] { width: auto; accent-color: var(--accent); }
+.pass-wrap { position: relative; }
+.pass-wrap input { padding-right: 44px; }
+.pass-toggle { position: absolute; right: 6px; top: 6px; background: none; border: 0; font-size: 15px; padding: 4px 8px; color: var(--muted); }
+.divider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; margin: 4px 0; }
+.divider::before, .divider::after { content: ""; flex: 1; border-top: 1px solid var(--border); }
+
+/* ---------- 6. Home hero (index.html) ---------- */
+.hero { background: linear-gradient(160deg, var(--primary), var(--primary-dark)); color: #fff; border-radius: 16px; padding: 56px 48px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; align-items: center; overflow: hidden; position: relative; }
+.hero h1 { font-size: 34px; line-height: 1.2; margin-bottom: 12px; }
+.hero h1 span { color: #7db3f7; }
+.hero p { color: #9db1cc; font-size: 15px; max-width: 480px; margin-bottom: 22px; }
+.hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+.hero-cta .ghost { background: rgba(255, 255, 255, 0.1); color: #fff; border-color: rgba(255, 255, 255, 0.25); }
+.hero img.hero-art { width: 100%; border-radius: 12px; }
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 20px; }
+.feature-grid .card h3 { font-size: 15px; color: var(--primary); margin-bottom: 6px; }
+.feature-grid .card p { font-size: 13px; color: var(--muted); }
+.site-nav { display: flex; align-items: center; gap: 14px; padding: 14px 4px; margin-bottom: 14px; }
+.site-nav .spacer { flex: 1; }
+.site-footer { text-align: center; color: var(--muted); font-size: 12.5px; padding: 26px 0 10px; }

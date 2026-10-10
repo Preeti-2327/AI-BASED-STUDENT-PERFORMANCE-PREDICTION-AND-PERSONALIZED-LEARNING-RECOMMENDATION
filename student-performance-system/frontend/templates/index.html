@@ -1,23 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-    <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>AI Student Performance Prediction</title>
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
-</head>
-
-
-<body>
-
-
-<div class="container">
+{% extends "base.html" %}
+{% block title %}AI Student Performance Prediction{% endblock %}
+{% block content %}
 
 
     <!-- ==========================================
@@ -25,6 +8,8 @@
     ========================================== -->
 
     <div class="project-header">
+
+        <img class="brand-logo" src="{{ url_for('static', filename='images/logo.svg') }}" alt="SPS logo">
 
         <div class="ai-badge">
             🤖 AI-POWERED SYSTEM
@@ -873,6 +858,9 @@
             </div>
 
 
+            <div class="form-error" id="formError" role="alert"></div>
+
+
         </form>
 
     </div>
@@ -941,12 +929,39 @@
     </div>
 
 
-</div>
 
+    <!-- ==========================================
+         RECENT PREDICTIONS (live /history)
+    ========================================== -->
 
-<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <div class="card">
 
+        <h2>Recent Predictions</h2>
 
-</body>
+        <div class="hist-bar">
 
-</html>
+            <span id="histCount" class="muted">Loading…</span>
+
+            <button type="button" id="refreshHist" class="mini-btn">↻ Refresh</button>
+
+        </div>
+
+        <div class="hist-wrap">
+
+            <table class="hist-table">
+
+                <thead>
+                    <tr><th>#</th><th>Grade</th><th>Level</th><th>When</th><th></th></tr>
+                </thead>
+
+                <tbody id="histRows">
+                    <tr><td colspan="5" class="hist-empty">Loading…</td></tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+{% endblock %}

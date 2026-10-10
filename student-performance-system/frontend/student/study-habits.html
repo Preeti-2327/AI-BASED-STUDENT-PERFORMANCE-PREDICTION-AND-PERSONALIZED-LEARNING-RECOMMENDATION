@@ -3,22 +3,92 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Study Habits</title>
+  <title>Study Habits · SPS Student</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>Study Habits</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/guard.js"></script>
-  <script src="../js/utils.js"></script>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img class="logo-img" src="../assets/images/logo.svg" alt="SPS logo"><div><strong>SPS Student</strong><small>Learning Portal</small></div></div>
+    <nav class="nav">
+      <div class="nav-label">Learn</div>
+      <a href="dashboard.html" data-page="dashboard.html"><span class="ico">📊</span> Dashboard</a>
+      <a href="prediction.html" data-page="prediction.html"><span class="ico">🔮</span> New Prediction</a>
+      <a href="my-marks.html" data-page="my-marks.html"><span class="ico">📝</span> My Marks</a>
+      <a href="recommendations.html" data-page="recommendations.html"><span class="ico">🎯</span> Recommendations</a>
+      <div class="nav-label">Me</div>
+      <a href="study-habits.html" data-page="study-habits.html"><span class="ico">📚</span> Study Habits</a>
+      <a href="history.html" data-page="history.html"><span class="ico">🕘</span> History</a>
+      <a href="profile.html" data-page="profile.html"><span class="ico">👤</span> Profile</a>
+      <div class="nav-label">System</div>
+      <a href="../index.html"><span class="ico">🏠</span> View Site</a>
+      <a href="#" data-logout><span class="ico">🚪</span> Logout</a>
+    </nav>
+    <div class="side-foot">© <span id="year"></span> SPS · v1.0</div>
+  </aside>
+  <div class="main-area">
+    <div class="topbar"><button class="ghost sm menu-btn" id="menuBtn">☰</button><span class="title">Study Habits</span><span class="spacer"></span><div class="user-chip"><span class="avatar">S</span><span data-username>Student</span></div></div>
+    <div class="content">
+      <div class="page-head"><div><h1>My Study Plan 📚</h1><p>Small routine changes move your predicted grade the most.</p></div></div>
+      <div class="panels" style="grid-template-columns:1fr 1fr">
+        <div class="panel"><header><h3>Weekly Routine</h3><span class="badge neutral" id="savedBadge">loaded</span></header><div class="pad">
+          <form id="habitForm" style="display:grid;gap:12px">
+            <div><label>Study hours per day</label><input id="h_hours" type="number" min="0" max="12" step="0.5" value="2"></div>
+            <div><label>Focus subject right now</label><select id="h_focus"><option>Mathematics</option><option>Science</option><option>English</option><option>Social Science</option></select></div>
+            <div><label>Revision days per week</label><input id="h_days" type="number" min="0" max="7" value="3"></div>
+            <div><label>Notes / goal for this week</label><textarea id="h_notes" rows="3" placeholder="e.g. Finish algebra chapter 4 + 20 practice sums"></textarea></div>
+            <button type="submit">Save Plan</button>
+          </form>
+        </div></div>
+        <div>
+          <div class="panel mb-2"><header><h3>Why it matters</h3></header><div class="pad" id="impactBox"><p class="muted">Loading…</p></div></div>
+          <div class="panel"><header><h3>Quick tips</h3></header><div class="pad muted" style="font-size:13px;display:grid;gap:8px">
+            <div>📵 Keep the phone away for the first 25 minutes of every session.</div>
+            <div>🔁 Revise within 24 hours — retention nearly doubles.</div>
+            <div>😴 Sleep 7+ hours; late-night cramming drops next-day recall.</div>
+            <div>📊 Re-run your <a href="prediction.html">prediction</a> after 2 weeks.</div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/guard.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/student.js"></script>
+<script>
+Student.seedDemo();
+requireRole(["student"]);
+document.addEventListener("DOMContentLoaded", () => {
+  Student.bindShell();
+  const h = Student.getHabits();
+  document.getElementById("h_hours").value = h.hoursPerDay ?? 2;
+  document.getElementById("h_focus").value = h.focus || "Mathematics";
+  document.getElementById("h_days").value = h.revisionDays ?? 3;
+  document.getElementById("h_notes").value = h.notes || "";
+  const upd = h.updatedAt ? "saved " + fmtDate(h.updatedAt) : "not saved yet";
+  document.getElementById("savedBadge").textContent = upd;
+  document.getElementById("impactBox").innerHTML = `
+    <div class="hbar"><span>Study time</span><div class="bar"><i style="width:${Math.min(100, (h.hoursPerDay || 0) / 6 * 100)}%;background:var(--accent)"></i></div><b>${h.hoursPerDay}h</b></div>
+    <div class="hbar"><span>Revision</span><div class="bar"><i style="width:${(h.revisionDays || 0) / 7 * 100}%;background:var(--ok)"></i></div><b>${h.revisionDays}/7</b></div>
+    <p class="muted mt-1" style="font-size:12px">Focus: <b>${escapeHtml(h.focus || "-")}</b>${h.notes ? " · “" + escapeHtml(h.notes.slice(0, 60)) + "”" : ""}</p>`;
+  document.getElementById("habitForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const next = Student.saveHabits({
+      hoursPerDay: parseFloat(document.getElementById("h_hours").value) || 0,
+      focus: document.getElementById("h_focus").value,
+      revisionDays: parseInt(document.getElementById("h_days").value) || 0,
+      notes: document.getElementById("h_notes").value.trim(),
+    });
+    document.getElementById("savedBadge").textContent = "saved " + fmtDate(next.updatedAt);
+  });
+});
+</script>
 </body>
 </html>

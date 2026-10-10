@@ -3,22 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Teachers</title>
+  <title>Manage Teachers · SPS Admin</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>Manage Teachers</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/guard.js"></script>
-  <script src="../js/utils.js"></script>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img class="logo-img" src="../assets/images/logo.svg" alt="SPS logo"><div><strong>SPS Admin</strong><small>Performance System</small></div></div>
+    <nav class="nav">
+      <div class="nav-label">Overview</div>
+      <a href="dashboard.html" data-page="dashboard.html"><span class="ico">📊</span> Dashboard</a>
+      <a href="reports.html" data-page="reports.html"><span class="ico">📈</span> Reports</a>
+      <div class="nav-label">Manage</div>
+      <a href="manage-students.html" data-page="manage-students.html"><span class="ico">🧑‍🎓</span> Students</a>
+      <a href="manage-teachers.html" data-page="manage-teachers.html"><span class="ico">👩‍🏫</span> Teachers</a>
+      <a href="manage-subjects.html" data-page="manage-subjects.html"><span class="ico">📚</span> Subjects</a>
+      <div class="nav-label">System</div>
+      <a href="../index.html"><span class="ico">🏠</span> View Site</a>
+      <a href="#" data-logout><span class="ico">🚪</span> Logout</a>
+    </nav>
+    <div class="side-foot">© <span id="year"></span> SPS · v1.0</div>
+  </aside>
+  <div class="main-area">
+    <div class="topbar"><button class="ghost sm menu-btn" id="menuBtn">☰</button><span class="title">Manage Teachers</span><span class="spacer"></span><div class="user-chip"><span class="avatar">A</span><span data-username>Admin</span></div></div>
+    <div class="content">
+      <div class="page-head"><div><h1>Teachers <span class="badge info" id="countBadge">0</span></h1><p>Staff directory, subject allocation & status.</p></div>
+        <div class="toolbar"><button id="exportBtn" class="ghost">⬇ Export CSV</button><button id="addBtn">+ Add Teacher</button></div></div>
+      <div class="card" style="margin-bottom:14px"><div class="toolbar"><div class="search"><input id="q" placeholder="Search teacher…"></div>
+        <select id="statusFilter" style="max-width:170px"><option value="">All status</option><option>Active</option><option>On Leave</option><option>Inactive</option></select></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Teacher</th><th>Subject</th><th>Classes</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead><tbody id="rows"></tbody></table></div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="modal"><div class="modal">
+  <header><h3 id="modalTitle">Add Teacher</h3><button class="ghost sm" id="closeModal" aria-label="Close dialog">✕</button></header>
+  <div class="body">
+    <div class="form-2col"><div><label>Full name</label><input id="f_name"></div><div><label>Teacher ID</label><input id="f_id"></div></div>
+    <div class="form-2col"><div><label>Email</label><input id="f_email" type="email"></div><div><label>Subject</label><input id="f_subject" placeholder="Mathematics"></div></div>
+    <div class="form-2col"><div><label>Classes / week</label><input id="f_classes" type="number" min="1" max="10" value="3"></div><div><label>Status</label><select id="f_status"><option>Active</option><option>On Leave</option><option>Inactive</option></select></div></div>
+  </div>
+  <footer><button class="ghost" id="cancelBtn">Cancel</button><button id="saveBtn">Save Teacher</button></footer>
+</div></div>
+<script src="../js/config.js"></script><script src="../js/api.js"></script><script src="../js/guard.js"></script>
+<script src="../js/utils.js"></script><script src="../js/charts.js"></script><script src="../js/admin.js"></script>
+<script>
+requireRole(["admin"]);
+let editing = null;
+const get = () => load(LS.teachers, []), set = v => store(LS.teachers, v);
+function render() {
+  const q = document.getElementById("q").value.toLowerCase(), sf = document.getElementById("statusFilter").value;
+  const all = get(), list = all.filter(t => (!q || (t.name + t.email + t.subject).toLowerCase().includes(q)) && (!sf || t.status === sf));
+  document.getElementById("countBadge").textContent = all.length;
+  document.getElementById("rows").innerHTML = list.length ? list.map(t => `<tr>
+    <td><div class="row"><span class="avatar" style="background:#2c7be5">${initials(t.name)}</span><div><b>${escapeHtml(t.name)}</b><div class="muted" style="font-size:12px">${escapeHtml(t.email)} · ${escapeHtml(t.id)}</div></div></div></td>
+    <td><span class="badge info">${escapeHtml(t.subject)}</span></td><td><b>${t.classes}</b> classes</td>
+    <td><span class="badge ${t.status === "Active" ? "ok" : t.status === "On Leave" ? "warn" : "neutral"}">${t.status}</span></td>
+    <td style="text-align:right;white-space:nowrap"><button class="ghost sm" onclick="toggleStatus('${t.id}')">Toggle</button> <button class="ghost sm" onclick="editTeacher('${t.id}')">Edit</button> <button class="danger sm" onclick="delTeacher('${t.id}')">Delete</button></td></tr>`).join("")
+    : `<tr><td colspan="5" class="empty">No teachers found.</td></tr>`;
+}
+function openModal(t) {
+  editing = t?.id || null;
+  document.getElementById("modalTitle").textContent = editing ? "Edit Teacher" : "Add Teacher";
+  document.getElementById("f_name").value = t?.name || ""; document.getElementById("f_id").value = t?.id || ("TCH-" + String(get().length + 1).padStart(2, "0"));
+  document.getElementById("f_email").value = t?.email || ""; document.getElementById("f_subject").value = t?.subject || "";
+  document.getElementById("f_classes").value = t?.classes ?? 3; document.getElementById("f_status").value = t?.status || "Active";
+  document.getElementById("f_id").disabled = !!editing;
+  document.getElementById("modal").classList.add("open");
+}
+window.editTeacher = id => openModal(get().find(t => t.id === id));
+window.delTeacher = id => { if (!confirm("Delete " + id + "?")) return; set(get().filter(t => t.id !== id)); render(); toast("Teacher deleted"); };
+window.toggleStatus = id => { const all = get(), t = all.find(x => x.id === id); t.status = t.status === "Active" ? "On Leave" : "Active"; set(all); render(); };
+document.addEventListener("DOMContentLoaded", () => {
+  render();
+  document.getElementById("q").addEventListener("input", render);
+  document.getElementById("statusFilter").addEventListener("input", render);
+  document.getElementById("addBtn").onclick = () => openModal();
+  document.getElementById("closeModal").onclick = document.getElementById("cancelBtn").onclick = () => document.getElementById("modal").classList.remove("open");
+  document.getElementById("exportBtn").onclick = () => downloadCSV("teachers.csv", get());
+  document.getElementById("saveBtn").onclick = () => {
+    const name = document.getElementById("f_name").value.trim();
+    if (!name) return toast("Name required");
+    const rawId = document.getElementById("f_id").value.trim();
+    if (!/^[A-Za-z0-9-]{1,16}$/.test(rawId)) return toast("ID: letters, numbers and - only");
+    const rec = { id: rawId, name, email: document.getElementById("f_email").value.trim(), subject: document.getElementById("f_subject").value.trim() || "General", classes: parseInt(document.getElementById("f_classes").value) || 1, status: document.getElementById("f_status").value };
+    const all = get();
+    if (editing) Object.assign(all.find(t => t.id === editing), rec);
+    else { if (all.some(t => t.id === rec.id)) return toast("ID exists"); all.push(rec); }
+    set(all); document.getElementById("modal").classList.remove("open"); render(); toast("Teacher saved ✓");
+  };
+});
+</script>
 </body>
 </html>

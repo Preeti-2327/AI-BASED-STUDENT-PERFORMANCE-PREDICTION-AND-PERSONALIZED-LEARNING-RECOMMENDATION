@@ -1,0 +1,61 @@
+{
+  "mae": 3.082,
+  "rmse": 3.869,
+  "r2": 0.27,
+  "within_1pt": 0.19,
+  "within_2pt": 0.392,
+  "n_test": 79,
+  "sample_actual_vs_predicted": [
+    {
+      "actual": 10,
+      "predicted": 9.68
+    },
+    {
+      "actual": 12,
+      "predicted": 9.72
+    },
+    {
+      "actual": 5,
+      "predicted": 10.1
+    },
+    {
+      "actual": 10,
+      "predicted": 12.29
+    },
+    {
+      "actual": 9,
+      "predicted": 9.98
+    },
+    {
+      "actual": 13,
+      "predicted": 8.85
+    },
+    {
+      "actual": 18,
+      "predicted": 14.34
+    },
+    {
+      "actual": 6,
+      "predicted": 11.36
+    },
+    {
+      "actual": 0,
+      "predicted": 10.71
+    },
+    {
+      "actual": 14,
+      "predicted": 12.22
+    }
+  ],
+  "retrained_this_run": false,
+  "generated_at": "2026-10-10T03:15:05.295423+00:00",
+  "model": "RandomForestRegressor(n_estimators=200, random_state=42)",
+  "schema": "uci",
+  "target": "G3",
+  "features_excluded": [
+    "G1",
+    "G2"
+  ],
+  "n_features": 39,
+  "train_size": 316
+}

@@ -24,6 +24,7 @@ sys.path.append(os.path.join(BASE_DIR, "ml-service"))
 sys.path.append(os.path.join(BASE_DIR, "backend"))
 
 from recommender import generate_recommendations
+from dataset import encode_features, level_for, load_dataset
 from database import get_connection, initialize_database
 
 app = Flask(
@@ -50,54 +51,26 @@ else:
 # Initialize SQLite database
 initialize_database()
 
-# Required input fields (30 features)
-REQUIRED_FIELDS = [
-    "school", "sex", "age", "address", "famsize",
-    "Pstatus", "Medu", "Fedu", "Mjob", "Fjob",
-    "reason", "guardian", "traveltime", "studytime",
-    "failures", "schoolsup", "famsup", "paid",
-    "activities", "nursery", "higher", "internet",
-    "romantic", "famrel", "freetime", "goout",
-    "Dalc", "Walc", "health", "absences"
-]
+# Schema comes from the dataset file on disk (dataset.py) — single source.
+# UCI → 30 fields, target G3 (0-20). Kaggle → 19 fields, target Exam_Score (0-100).
+try:
+    _df_probe, SCHEMA, DATA_PATH = load_dataset()
+    del _df_probe
+except Exception as exc:
+    print(f"WARNING: dataset not found ({exc}). Put CSV at data/student-mat.csv")
+    from dataset import UCI_SCHEMA as SCHEMA
+    DATA_PATH = None
+
+REQUIRED_FIELDS = SCHEMA["required_fields"]
 
 # Allowed values for categorical fields
-ALLOWED_VALUES = {
-    "school": ["GP", "MS"],
-    "sex": ["F", "M"],
-    "address": ["U", "R"],
-    "famsize": ["GT3", "LE3"],
-    "Pstatus": ["T", "A"],
-    "Mjob": ["teacher", "health", "services", "at_home", "other"],
-    "Fjob": ["teacher", "health", "services", "at_home", "other"],
-    "reason": ["home", "reputation", "course", "other"],
-    "guardian": ["mother", "father", "other"],
-    "schoolsup": ["yes", "no"],
-    "famsup": ["yes", "no"],
-    "paid": ["yes", "no"],
-    "activities": ["yes", "no"],
-    "nursery": ["yes", "no"],
-    "higher": ["yes", "no"],
-    "internet": ["yes", "no"],
-    "romantic": ["yes", "no"]
-}
+ALLOWED_VALUES = SCHEMA["allowed_values"]
 
 # Minimum and maximum values for numeric fields
-NUMERIC_RANGES = {
-    "age": (15, 22),
-    "Medu": (0, 4),
-    "Fedu": (0, 4),
-    "traveltime": (1, 4),
-    "studytime": (1, 4),
-    "failures": (0, 3),
-    "famrel": (1, 5),
-    "freetime": (1, 5),
-    "goout": (1, 5),
-    "Dalc": (1, 5),
-    "Walc": (1, 5),
-    "health": (1, 5),
-    "absences": (0, 75)
-}
+NUMERIC_RANGES = SCHEMA["numeric_ranges"]
+
+TARGET_NAME = SCHEMA["target"]
+SCALE_MAX = SCHEMA["scale_max"]
 
 # --------------------------------------------------
 # HOME PAGE
@@ -185,41 +158,26 @@ def predict():
                 }), 400
 
             student[field] = number
-        # 4. Convert input into a DataFrame
-        student_df = pd.DataFrame([student])
-
-        # 5. Encode categorical features
-        student_df = pd.get_dummies(
-            student_df,
-            drop_first=True
-        )
-
-        # 6. Match training feature columns
-        student_df = student_df.reindex(
-            columns=feature_columns,
-            fill_value=0
+        # 4. Convert input into a DataFrame (shared train/serve encoding)
+        student_df = encode_features(
+            pd.DataFrame([student]), SCHEMA, feature_columns
         )
 
         # 7. Predict final grade
         prediction = float(model.predict(student_df)[0])
 
-        # Keep predicted grade within the dataset's 0–20 range
-        prediction = max(0.0, min(20.0, prediction))
+        # Keep predicted grade within the dataset scale
+        prediction = max(0.0, min(float(SCALE_MAX), prediction))
 
-        # 8. Determine performance level
-        if prediction < 10:
-            level = "Needs Improvement"
-        elif prediction < 13:
-            level = "Average"
-        elif prediction < 16:
-            level = "Good"
-        else:
-            level = "Excellent"
+        # 8. Determine performance level (schema thresholds)
+        level = level_for(prediction, SCHEMA)
 
         # 9. Generate personalized recommendations
         recommendations = generate_recommendations(
             student,
-            prediction
+            prediction,
+            scale_max=SCALE_MAX,
+            level=level
         )
 
         # 10. Save prediction to SQLite
@@ -352,6 +310,20 @@ def delete_prediction(record_id):
 
     finally:
         connection.close()
+# --------------------------------------------------
+# ERROR PAGES
+# --------------------------------------------------
+
+@app.errorhandler(404)
+def not_found(error):
+    return render_template("errors/404.html"), 404
+
+
+@app.errorhandler(500)
+def server_error(error):
+    return render_template("errors/500.html"), 500
+
+
 # --------------------------------------------------
 # RUN FLASK APPLICATION
 # --------------------------------------------------

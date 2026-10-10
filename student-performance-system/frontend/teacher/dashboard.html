@@ -3,22 +3,91 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Teacher Dashboard</title>
+  <title>Teacher Dashboard · SPS</title>
+  <link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <!-- Sidebar -->
-  <main>
-    <h1>Teacher Dashboard</h1>
-    <!-- TODO: page content -->
-  </main>
-  <!-- Footer -->
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/guard.js"></script>
-  <script src="../js/utils.js"></script>
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><img class="logo-img" src="../assets/images/logo.svg" alt="SPS logo"><div><strong>SPS Teacher</strong><small>Classroom Portal</small></div></div>
+    <nav class="nav">
+      <div class="nav-label">Classroom</div>
+      <a href="dashboard.html" data-page="dashboard.html"><span class="ico">📊</span> Dashboard</a>
+      <a href="students.html" data-page="students.html"><span class="ico">🧑‍🎓</span> Students</a>
+      <a href="add-marks.html" data-page="add-marks.html"><span class="ico">📝</span> Add Marks</a>
+      <a href="at-risk.html" data-page="at-risk.html"><span class="ico">⚠️</span> At-Risk</a>
+      <a href="attendance.html" data-page="attendance.html"><span class="ico">✅</span> Attendance</a>
+      <div class="nav-label">System</div>
+      <a href="../index.html"><span class="ico">🏠</span> View Site</a>
+      <a href="#" data-logout><span class="ico">🚪</span> Logout</a>
+    </nav>
+    <div class="side-foot">© <span id="year"></span> SPS · v1.0</div>
+  </aside>
+  <div class="main-area">
+    <div class="topbar"><button class="ghost sm menu-btn" id="menuBtn">☰</button><span class="title">Class Dashboard</span><span class="spacer"></span><span class="badge info" id="dateBadge"></span><div class="user-chip"><span class="avatar" id="avatarInit">T</span><span data-username>Teacher</span></div></div>
+    <div class="content">
+      <div class="page-head"><div><h1 id="welcomeTitle">Good morning 👋</h1><p>Class overview, attendance and students needing attention.</p></div>
+        <div class="toolbar"><button class="ghost" onclick="location.href='attendance.html'">✅ Mark Attendance</button><button onclick="location.href='add-marks.html'">+ Add Marks</button></div></div>
+      <section class="stats">
+        <div class="stat"><div class="icon" style="background:#e8f1fd">🧑‍🎓</div><div><b id="cStudents">0</b><span>Students</span></div></div>
+        <div class="stat"><div class="icon" style="background:#fdecea">⚠️</div><div><b id="cRisk">0</b><span>At-Risk</span><div class="trend down">Needs action</div></div></div>
+        <div class="stat"><div class="icon" style="background:#e3f5e9">✅</div><div><b id="cAtt">–</b><span>Present Today</span></div></div>
+        <div class="stat"><div class="icon" style="background:#fef3e2">⭐</div><div><b id="cAvg">–</b><span>Class Average</span></div></div>
+      </section>
+      <section class="panels">
+        <div class="panel"><header><h3>Class Level Mix</h3><a href="students.html">Roster →</a></header><div class="pad"><canvas class="chart" id="mixChart"></canvas></div></div>
+        <div class="panel"><header><h3>Needs Attention</h3><a href="at-risk.html">View all →</a></header><div class="pad" id="riskBox"><p class="muted">Loading…</p></div></div>
+      </section>
+      <div class="panel"><header><h3>Today's Checklist</h3></header><div class="pad" style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="ghost" onclick="location.href='attendance.html'">✅ <span id="attHint">Mark today's attendance</span></button>
+        <button class="ghost" onclick="location.href='add-marks.html'">📝 Enter marks / run prediction</button>
+        <button class="ghost" onclick="location.href='at-risk.html'">⚠️ Review at-risk students</button>
+      </div></div>
+    </div>
+  </div>
+</div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/guard.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/teacher.js"></script>
+<script>
+Teacher.seedDemo();
+requireRole(["teacher"]);
+document.addEventListener("DOMContentLoaded", async () => {
+  Teacher.bindShell();
+  const hour = new Date().getHours();
+  const me = localStorage.getItem("username") || "Teacher";
+  document.getElementById("welcomeTitle").textContent = `Good ${hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening"}, ${me.split(" ")[0]} 👋`;
+  document.getElementById("avatarInit").textContent = initials(me);
+  document.getElementById("dateBadge").textContent = new Date().toDateString();
+  const roster = Teacher.roster();
+  document.getElementById("cStudents").textContent = roster.length;
+  if (roster.length) {
+    const vals = roster.map(s => +s.avg || 0);
+    document.getElementById("cAvg").textContent = (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+    const levels = ["Needs Improvement", "Average", "Good", "Excellent"];
+    drawBarChart(document.getElementById("mixChart"), ["At Risk", "Average", "Good", "Excel."],
+      levels.map(l => roster.filter(s => s.level === l).length));
+  }
+  const risk = await Teacher.atRisk();
+  document.getElementById("cRisk").textContent = risk.length;
+  document.getElementById("riskBox").innerHTML = risk.length ? risk.slice(0, 4).map(r => {
+    const name = r.student_data ? `Record #${r.id} · ${r.student_data.sex === "F" ? "Girl" : "Boy"}, ${r.student_data.age}y` : r.name;
+    const grade = r.predicted_grade ?? r.avg ?? "-";
+    return `<div class="row" style="justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f3f8">
+      <div class="row"><span class="avatar">${initials(name)}</span><div><b>${escapeHtml(name)}</b><div class="muted" style="font-size:12px">Grade ${grade}</div></div></div>
+      ${levelBadge("Needs Improvement")}</div>`;
+  }).join("") : `<p class="empty">🎉 Nobody at risk right now.</p>`;
+  const todayMap = Teacher.getAttendance();
+  const marked = Object.keys(todayMap).length;
+  document.getElementById("cAtt").textContent = marked ? `${Object.values(todayMap).filter(Boolean).length}/${roster.length}` : "–";
+  if (marked) document.getElementById("attHint").textContent = "Update today's attendance";
+});
+</script>
 </body>
 </html>
