@@ -1,5 +1,5 @@
 
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 import pandas as pd
 import joblib
 import sys
@@ -25,13 +25,22 @@ sys.path.append(os.path.join(BASE_DIR, "backend"))
 
 from recommender import generate_recommendations
 from dataset import encode_features, level_for, load_dataset
-from database import get_connection, initialize_database
+from database import (
+    create_user,
+    delete_token,
+    get_connection,
+    get_user_by_email,
+    initialize_database,
+)
+from werkzeug.security import check_password_hash
 
 app = Flask(
     __name__,
     template_folder=os.path.join(BASE_DIR, "frontend", "templates"),
     static_folder=os.path.join(BASE_DIR, "frontend", "static"),
 )
+
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
 # --------------------------------------------------
 # LOAD MACHINE LEARNING MODEL
@@ -310,6 +319,87 @@ def delete_prediction(record_id):
 
     finally:
         connection.close()
+
+
+# --------------------------------------------------
+# AUTH API  (/api/auth/*)
+# --------------------------------------------------
+
+VALID_ROLES = ["admin", "teacher", "student"]
+
+
+@app.route("/api/auth/register", methods=["POST"])
+def auth_register():
+    student = request.get_json(silent=True)
+
+    if not isinstance(student, dict):
+        return jsonify({"error": "Please send valid JSON."}), 400
+
+    name = str(student.get("name") or "").strip()
+    email = str(student.get("email") or "").strip().lower()
+    password = student.get("password")
+    role = student.get("role") or "student"
+
+    if not name or not email or not password:
+        return jsonify({"error": "Name, email and password are required."}), 400
+
+    if "@" not in email:
+        return jsonify({"error": "Please provide a valid email address."}), 400
+
+    if len(str(password)) < 4:
+        return jsonify({"error": "Password must be at least 4 characters."}), 400
+
+    if role not in VALID_ROLES:
+        return jsonify({"error": "Invalid role."}), 400
+
+    if get_user_by_email(email) is not None:
+        return jsonify({"error": "Email is already registered."}), 409
+
+    user = create_user(name, email, str(password), role)
+
+    return jsonify({
+        "token": user["token"],
+        "role": user["role"],
+        "username": user["name"],
+    }), 201
+
+
+@app.route("/api/auth/login", methods=["POST"])
+def auth_login():
+    student = request.get_json(silent=True)
+
+    if not isinstance(student, dict):
+        return jsonify({"error": "Please send valid JSON."}), 400
+
+    email = str(student.get("email") or "").strip().lower()
+    password = student.get("password")
+
+    if not email or not password:
+        return jsonify({"error": "Email and password are required."}), 400
+
+    user = get_user_by_email(email)
+
+    if user is None or not check_password_hash(user["password_hash"], str(password)):
+        return jsonify({"error": "Invalid email or password."}), 401
+
+    return jsonify({
+        "token": user["token"],
+        "role": user["role"],
+        "username": user["name"],
+    }), 200
+
+
+@app.route("/api/auth/logout", methods=["POST"])
+def auth_logout():
+    auth_header = request.headers.get("Authorization") or ""
+    token = auth_header.replace("Bearer ", "").strip()
+
+    if token:
+        delete_token(token)
+
+    return jsonify({"message": "Logged out successfully."}), 200
+
+
 # --------------------------------------------------
 # ERROR PAGES
 # --------------------------------------------------
@@ -322,6 +412,30 @@ def not_found(error):
 @app.errorhandler(500)
 def server_error(error):
     return render_template("errors/500.html"), 500
+
+
+# --------------------------------------------------
+# SERVICE HEALTH
+# --------------------------------------------------
+
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({
+        "status": "ok",
+        "model_loaded": model is not None,
+    }), 200
+
+
+# --------------------------------------------------
+# FRONTEND STATIC / MULTI-PAGE SERVING
+# Serves any file inside frontend/ (pages, static assets).
+# API routes defined above (/predict, /history, /health) win by specificity.
+# Unknown paths fall through to the custom 404 error handler.
+# --------------------------------------------------
+
+@app.route("/<path:path>")
+def serve_frontend(path):
+    return send_from_directory(FRONTEND_DIR, path)
 
 
 # --------------------------------------------------
