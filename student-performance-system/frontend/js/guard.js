@@ -27,8 +27,9 @@ function requireRole(allowed) {
 // ---------- 3. Redirects (sub-path safe: works at / and /repo-name/) ----------
 function appRoot() {
   const parts = location.pathname.split("/").filter(Boolean);
-  // Portal pages live one level deep (/admin, /student, /teacher).
-  if (parts.length && ["admin", "student", "teacher"].includes(parts[0])) return "../";
+  // If the second-to-last part is admin, student, or teacher, we need to go up one level
+  const currentDir = parts.length > 1 ? parts[parts.length - 2] : "";
+  if (["admin", "student", "teacher"].includes(currentDir)) return "../";
   return "";
 }
 function loginUrl() {

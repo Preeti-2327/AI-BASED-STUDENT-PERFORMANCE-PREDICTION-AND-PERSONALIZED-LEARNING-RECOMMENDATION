@@ -31,6 +31,9 @@ from database import (
     get_connection,
     get_user_by_email,
     initialize_database,
+    save_prediction,
+    get_all_predictions,
+    delete_prediction as db_delete_prediction,
 )
 from werkzeug.security import check_password_hash
 
@@ -189,32 +192,13 @@ def predict():
             level=level
         )
 
-        # 10. Save prediction to SQLite
-        connection = get_connection()
-
-        try:
-            connection.execute(
-                """
-                INSERT INTO predictions (
-                    student_data,
-                    predicted_grade,
-                    performance_level,
-                    recommendations
-                )
-                VALUES (?, ?, ?, ?)
-                """,
-                (
-                    json.dumps(student),
-                    round(prediction, 2),
-                    level,
-                    json.dumps(recommendations)
-                )
-            )
-
-            connection.commit()
-
-        finally:
-            connection.close()
+        # 10. Save prediction to MySQL
+        save_prediction(
+            student_data=student,
+            predicted_grade=round(prediction, 2),
+            performance_level=level,
+            recommendations=recommendations,
+        )
 
         # 11. Return results to frontend
         return jsonify({
@@ -245,36 +229,8 @@ def predict():
 
 @app.route("/history", methods=["GET"])
 def prediction_history():
-    connection = get_connection()
-
     try:
-        rows = connection.execute(
-            """
-            SELECT
-                id,
-                student_data,
-                predicted_grade,
-                performance_level,
-                recommendations,
-                created_at
-            FROM predictions
-            ORDER BY id DESC
-            """
-        ).fetchall()
-
-        history = []
-
-        for row in rows:
-            record = dict(row)
-
-            # Convert stored JSON strings back into Python objects
-            record["student_data"] = json.loads(record["student_data"])
-            record["recommendations"] = json.loads(
-                record["recommendations"]
-            )
-
-            history.append(record)
-
+        history = get_all_predictions(limit=100)
         return jsonify({
             "total_records": len(history),
             "history": history
@@ -286,23 +242,12 @@ def prediction_history():
             "error": "Unable to retrieve prediction history."
         }), 500
 
-    finally:
-        connection.close()
-
-
 
 @app.route("/history/<int:record_id>", methods=["DELETE"])
 def delete_prediction(record_id):
-    connection = get_connection()
-
     try:
-        cursor = connection.execute(
-            "DELETE FROM predictions WHERE id = ?",
-            (record_id,)
-        )
-        connection.commit()
-
-        if cursor.rowcount == 0:
+        success = db_delete_prediction(record_id)
+        if not success:
             return jsonify({
                 "error": "Prediction record not found."
             }), 404
@@ -316,9 +261,6 @@ def delete_prediction(record_id):
         return jsonify({
             "error": "Unable to delete prediction record."
         }), 500
-
-    finally:
-        connection.close()
 
 
 # --------------------------------------------------

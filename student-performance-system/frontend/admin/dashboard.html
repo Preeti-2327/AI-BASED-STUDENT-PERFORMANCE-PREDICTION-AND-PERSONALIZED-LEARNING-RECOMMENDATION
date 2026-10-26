@@ -62,6 +62,7 @@
 <script src="../js/charts.js"></script>
 <script src="../js/admin.js"></script>
 <script>
+seedIfEmpty();
 requireRole(["admin"]);
 document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("avatarInit").textContent = initials(localStorage.getItem("username") || "Admin");
