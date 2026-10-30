@@ -42,4 +42,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD python -c "import os,urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:' + os.environ.get('PORT', '8000') + '/health', timeout=5).status == 200 else 1)"
 
 # ---- Production WSGI server (gunicorn) ----
-CMD ["gunicorn", "--chdir", "/app/student-performance-system/backend", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "120", "wsgi:app"]
+# Binds to $PORT (defaults to 8000) — respects injected PORT from PaaS providers.
+CMD ["sh", "-c", "gunicorn --chdir /app/student-performance-system/backend --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120 wsgi:app"]
