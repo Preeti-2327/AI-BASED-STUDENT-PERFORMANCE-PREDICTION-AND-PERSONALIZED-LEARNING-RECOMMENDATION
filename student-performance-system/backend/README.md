@@ -1,7 +1,6 @@
 # Backend — Flask API
 
-Flask REST API + frontend server for the AI Based Student Performance
-Prediction and Personalized Learning Recommendation system.
+Flask REST API + frontend server for the AI Based Student Performance Prediction and Personalized Learning Recommendation system.
 
 ## Run
 
@@ -67,10 +66,11 @@ Response:
 ```
 backend/
 ├── app.py            # Flask app: routes, validation, ML wiring, error handlers
-├── database.py       # SQLite connection + predictions table
+├── database.py       # SQLite (default) / MySQL (optional) — predictions, users, etc.
+├── check_database.py
 ├── requirements.txt
-├── test_api.py       # API smoke test (needs server running)
-└── check_database.py
+├── schema.sql        # full relational schema (MySQL dialect reference)
+├── test_api.py       # legacy duplicate — REMOVED (suite lives in tests/)
 
 # Supporting single-source modules (project root: student-performance-system/)
 ├── ml-service/
@@ -79,12 +79,35 @@ backend/
 ├── models/               # trained model: student_performance_model.pkl, feature_columns.pkl
 ├── data/student-mat.csv
 └── student_performance.db   # SQLite DB (created at project root on startup)
+
+tests/
+└── test_api.py       # pytest API suite (Flask test client, no server needed)
 ```
 
 ## Tests
 
 ```bash
 python backend/app.py        # terminal 1
-python tests/test_api.py     # terminal 2 (needs server on :5000)
+pytest tests/ -v             # terminal 2 (in-process test client — no server needed)
 python backend/check_database.py
 ```
+
+## Production
+
+Run behind a production WSGI server:
+
+```bash
+# from repo root
+gunicorn --chdir student-performance-system/backend --bind 0.0.0.0:8000 --workers 2 --timeout 120 wsgi:app
+
+# cross-platform (incl. Windows)
+waitress-serve --host=0.0.0.0 --port=8000 wsgi:app
+
+# Docker
+docker build -t student-performance .
+docker run -d -p 8000:8000 student-performance
+```
+
+The app honors `HOST`, `PORT` and `FLASK_DEBUG` env vars. Health check: `GET /health`.
+Full guide: `../../DEPLOYMENT.md`.
+

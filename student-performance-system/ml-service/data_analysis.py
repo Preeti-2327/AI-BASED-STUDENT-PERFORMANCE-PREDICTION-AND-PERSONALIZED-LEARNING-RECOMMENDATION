@@ -16,8 +16,11 @@ os.makedirs(os.path.join(BASE_DIR, "graphs"), exist_ok=True)
 # Load dataset from single source of truth (dataset.py)
 data, SCHEMA, DATA_PATH = load_dataset()
 TARGET = SCHEMA["target"]
-print(f"Dataset: {DATA_PATH} (schema={SCHEMA['name']}, target={TARGET})")
+LEVELS = SCHEMA.get("levels", [])
+CUT_OFFS = [c for c, _ in LEVELS]
+LO = min(0, float(data[TARGET].min())) if len(data) else 0
 
+print(f"Dataset: {DATA_PATH} (schema={SCHEMA['name']}, target={TARGET})")
 print("Dataset loaded successfully!")
 
 print("\nFirst 5 rows:")
@@ -42,16 +45,22 @@ print(data.describe())
 
 plt.figure(figsize=(8, 5))
 
-sns.histplot(data["G3"], bins=21, kde=True)
+bins = [LO - 1e-6] + sorted(set(CUT_OFFS)) + [float(data[TARGET].max()) + 1]
 
-plt.title("Distribution of Final Student Grades")
-plt.xlabel("Final Grade (G3)")
+sns.histplot(
+    data=data[TARGET],
+    bins=bins,
+    kde=True,
+)
+
+plt.title(f"Distribution of Final Student Grades ({TARGET})")
+plt.xlabel(f"Final Grade ({TARGET})")
 plt.ylabel("Number of Students")
 
 plt.savefig(
     os.path.join(BASE_DIR, "graphs", "grade_distribution.png"),
     dpi=300,
-    bbox_inches="tight"
+    bbox_inches="tight",
 )
 
 plt.close()
@@ -61,109 +70,90 @@ plt.close()
 # 2. Study Time vs Final Grade
 # --------------------------------------------------
 
+study_col = "studytime" if "studytime" in data.columns else "Hours_Studied"
+
 plt.figure(figsize=(8, 5))
 
 sns.boxplot(
-    x="studytime",
-    y="G3",
-    data=data
+    x=study_col,
+    y=TARGET,
+    data=data,
 )
 
-plt.title("Study Time vs Final Grade")
+plt.title(f"Study Time vs Final Grade")
 plt.xlabel("Study Time")
-plt.ylabel("Final Grade (G3)")
+plt.ylabel(f"Final Grade ({TARGET})")
 
 plt.savefig(
     os.path.join(BASE_DIR, "graphs", "studytime_vs_grade.png"),
     dpi=300,
-    bbox_inches="tight"
+    bbox_inches="tight",
 )
 
 plt.close()
 
 
 # --------------------------------------------------
-# 3. Absences vs Final Grade
+# 3. Absences / Attendance vs Final Grade
 # --------------------------------------------------
+
+att_col = "absences" if "absences" in data.columns else "Attendance"
 
 plt.figure(figsize=(8, 5))
 
 sns.scatterplot(
-    x="absences",
-    y="G3",
-    data=data
+    x=att_col,
+    y=TARGET,
+    data=data,
 )
 
 plt.title("Absences vs Final Grade")
 plt.xlabel("Number of Absences")
-plt.ylabel("Final Grade (G3)")
+plt.ylabel(f"Final Grade ({TARGET})")
 
 plt.savefig(
     os.path.join(BASE_DIR, "graphs", "absences_vs_grade.png"),
     dpi=300,
-    bbox_inches="tight"
+    bbox_inches="tight",
 )
 
 plt.close()
 
 
 # --------------------------------------------------
-# 4. G1 vs G3
+# 4. Prior-period grades vs Final Grade (UCI only)
 # --------------------------------------------------
 
-plt.figure(figsize=(8, 5))
+for prior_col, label in (("G1", "First Period Grade"), ("G2", "Second Period Grade")):
+    if prior_col not in data.columns:
+        continue
 
-sns.scatterplot(
-    x="G1",
-    y="G3",
-    data=data
-)
+    plt.figure(figsize=(8, 5))
 
-plt.title("First Period Grade vs Final Grade")
-plt.xlabel("G1 - First Period Grade")
-plt.ylabel("Final Grade (G3)")
+    sns.scatterplot(
+        x=prior_col,
+        y=TARGET,
+        data=data,
+    )
 
-plt.savefig(
-    os.path.join(BASE_DIR, "graphs", "g1_vs_g3.png"),
-    dpi=300,
-    bbox_inches="tight"
-)
+    plt.title(f"{label} vs Final Grade")
+    plt.xlabel(prior_col)
+    plt.ylabel(f"Final Grade ({TARGET})")
 
-plt.close()
+    plt.savefig(
+        os.path.join(BASE_DIR, "graphs", f"{prior_col.lower()}_vs_{TARGET.lower()}.png"),
+        dpi=300,
+        bbox_inches="tight",
+    )
 
-
-# --------------------------------------------------
-# 5. G2 vs G3
-# --------------------------------------------------
-
-plt.figure(figsize=(8, 5))
-
-sns.scatterplot(
-    x="G2",
-    y="G3",
-    data=data
-)
-
-plt.title("Second Period Grade vs Final Grade")
-plt.xlabel("G2 - Second Period Grade")
-plt.ylabel("Final Grade (G3)")
-
-plt.savefig(
-    os.path.join(BASE_DIR, "graphs", "g2_vs_g3.png"),
-    dpi=300,
-    bbox_inches="tight"
-)
-
-plt.close()
+    plt.close()
 
 
 # --------------------------------------------------
-# 6. Correlation Heatmap
+# 5. Correlation Heatmap
 # --------------------------------------------------
 
-numeric_data = data.select_dtypes(
-    include=["int64", "float64"]
-)
+numeric_data = data.select_dtypes(include=["int64", "float64"])
 
 correlation = numeric_data.corr()
 
@@ -173,7 +163,7 @@ sns.heatmap(
     correlation,
     annot=True,
     fmt=".2f",
-    cmap="coolwarm"
+    cmap="coolwarm",
 )
 
 plt.title("Correlation Heatmap")
@@ -181,7 +171,7 @@ plt.title("Correlation Heatmap")
 plt.savefig(
     os.path.join(BASE_DIR, "graphs", "correlation_heatmap.png"),
     dpi=300,
-    bbox_inches="tight"
+    bbox_inches="tight",
 )
 
 plt.close()

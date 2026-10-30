@@ -192,7 +192,7 @@ def predict():
             level=level
         )
 
-        # 10. Save prediction to MySQL
+        # 10. Save prediction to the database (SQLite / MySQL)
         save_prediction(
             student_data=student,
             predicted_grade=round(prediction, 2),
@@ -385,4 +385,10 @@ def serve_frontend(path):
 # --------------------------------------------------
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Production-ready defaults: bind 0.0.0.0 on $PORT (required by most
+    # PaaS / container hosts), debug only when FLASK_DEBUG=1 explicitly set.
+    app.run(
+        host=os.environ.get("HOST", "0.0.0.0"),
+        port=int(os.environ.get("PORT") or 5000),
+        debug=str(os.environ.get("FLASK_DEBUG", "0")).lower() in ("1", "true", "yes", "on"),
+    )

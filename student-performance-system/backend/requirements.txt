@@ -4,5 +4,10 @@ scikit-learn
 matplotlib
 seaborn
 flask
+gunicorn>=21.2
+waitress>=3.0
 joblib
 requests
+pymysql
+werkzeug
+pytest

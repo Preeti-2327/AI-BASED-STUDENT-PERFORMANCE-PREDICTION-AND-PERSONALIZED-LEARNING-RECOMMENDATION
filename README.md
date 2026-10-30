@@ -4,7 +4,7 @@ An end-to-end machine learning project that **predicts student academic performa
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-orange)
-![Streamlit](https://img.shields.io/badge/Streamlit-App-red)
+![Flask](https://img.shields.io/badge/Flask-3.x-lightgrey)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
@@ -20,6 +20,9 @@ An end-to-end machine learning project that **predicts student academic performa
 - [Installation](#-installation)
 - [Usage](#-usage)
 - [Results](#-results)
+- [Testing](#-testing)
+- [Database](#-database)
+- [Deployment](#-deployment)
 - [Future Scope](#-future-scope)
 - [Contributing](#-contributing)
 - [License](#-license)
@@ -39,47 +42,65 @@ Every student learns differently. Traditional one-size-fits-all teaching often f
 
 ## ✨ Features
 
-- 📊 **Performance Prediction** – Predicts grades/scores using multiple ML models.
+- 📊 **Performance Prediction** – Predicts grades/scores using a Random Forest regressor.
 - ⚠️ **At-Risk Detection** – Flags students who need early intervention.
 - 🎯 **Personalized Recommendations** – Suggests study material and focus areas tailored to each student.
-- 📈 **Data Visualization** – Insightful charts for attendance, study hours, marks distribution, and correlations.
-- 🖥️ **Interactive Web App** – Simple UI to enter student data and view predictions and recommendations.
-- 🔬 **Model Comparison** – Evaluates several algorithms and selects the best performer.
+- 📈 **Data Visualization** – Distribution, correlation heatmap, study-time / attendance plots (`graphs/`).
+- 🖥️ **Interactive Web App** – Flask + vanilla-JS portals (admin / teacher / student) served by the backend.
+- 🔬 **Model Comparison & Reports** – `ml-service/generate_reports.py` writes `ml-service/reports/`.
 
 ---
 
 ## 🛠 Tech Stack
 
 | Category            | Tools                                             |
-| ------------------- | ------------------------------------------------- |
+| ------------------- | ------------------------------------------------ |
 | Language            | Python 3.9+                                       |
 | Data Processing     | Pandas, NumPy                                     |
-| Machine Learning    | Scikit-learn, XGBoost                             |
-| Recommendation      | Content-based filtering / Cosine Similarity       |
-| Visualization       | Matplotlib, Seaborn, Plotly                       |
-| Web App             | Streamlit                                         |
-| Environment         | Jupyter Notebook, VS Code                         |
+| Machine Learning    | Scikit-learn, Random Forest                      |
+| Recommendation      | Rule-based personalized tips (scales with schema) |
+| Visualization       | Matplotlib, Seaborn, Plotly                     |
+| Web App             | Flask, vanilla JS (no frontend build step)       |
+| Database            | SQLite (default) / MySQL (optional)              |
+| Environment         | Jupyter Notebook, VS Code                        |
 
 ---
 
 ## 📁 Project Structure
 
-> Single project lives in `student-performance-system/`. No duplicates — ZIP, `__pycache__`, generated `.db`, Node TODO stubs and legacy broken `ml-service/app.py` removed.
-
 ```
 .
 ├── README.md
-├── .gitignore
 └── student-performance-system/
-    ├── backend/app.py, database.py
-    ├── frontend/templates/index.html, static/, admin/, student/, teacher/
-    ├── ml-service/train_model.py, predict.py, recommender.py, data_analysis.py
+    ├── backend/                 # Flask API + database layer
+    │   ├── app.py               # / , /predict, /history, /api/auth/*, /health, errors
+    │   ├── database.py          # SQLite (default) / MySQL (optional) data access
+    │   ├── check_database.py   # DB sanity check
+    │   ├── schema.sql          # full relational schema (MySQL dialect reference)
+    │   ├── requirements.txt
+    │   └── README.md
+    ├── frontend/                # Static front-end served by Flask
+    │   ├── templates/          # Jinja2 (base.html, index.html, errors/)
+    │   ├── static/             # Flask static (/static/*) — css/js/images
+    │   ├── css/, js/, assets/ # standalone portal pages + design assets
+    │   ├── admin/, student/, teacher/
+    │   ├── index.html, login.html, register.html
+    ├── ml-service/              # ML pipeline
+    │   ├── dataset.py          # single source of truth (schema + encoding)
+    │   ├── train_model.py, predict.py, recommender.py, data_analysis.py
+    │   ├── generate_reports.py
+    │   ├── notebooks/, reports/, models/, data/
     ├── data/student-mat.csv
-    ├── models/ tests/ graphs/ docs/
-    └── requirements.txt
+    ├── models/                  # trained .pkl artifacts
+    ├── tests/test_api.py       # pytest API suite
+    ├── graphs/                  # generated EDA charts
+    ├── docs/                    # legacy MySQL schema/seed + project brief PDF
+    ├── requirements.txt
+    └── student_performance.db  # SQLite DB (auto-created)
 ```
 
-Run:
+Run (development):
+
 ```bash
 cd student-performance-system
 pip install -r requirements.txt
@@ -88,18 +109,26 @@ python backend/app.py
 # open http://127.0.0.1:5000
 ```
 
+Run (production):
+
+```bash
+pip install -r student-performance-system/requirements.txt
+python student-performance-system/ml-service/train_model.py
+gunicorn --chdir student-performance-system/backend --bind 0.0.0.0:8000 --workers 2 --timeout 120 wsgi:app
+# cross-platform (incl. Windows): cd student-performance-system/backend && waitress-serve --host=0.0.0.0 --port=8000 wsgi:app
+
+# open http://127.0.0.1:8000
+# health: http://127.0.0.1:8000/health
+```
+
 ---
 
 ## 📂 Dataset
 
-- **Source:** [UCI Student Performance Dataset](https://archive.ics.uci.edu/ml/datasets/student+performance) / Kaggle / Custom dataset
-- **Records:** *(add number of rows)*
-- **Key Features:**
-  - Demographics (age, gender, address)
-  - Academic history (previous grades, failures)
-  - Study habits (study time, absences, attendance)
-  - Social factors (family support, internet access, free time)
-  - Target: Final grade (G3) / Pass–Fail / Performance category
+- **Source:** UCI Student Performance Dataset (`data/student-mat.csv`, `;` separator, target `G3` 0–20).
+- **Records:** 395 students · 33 columns (demographics, academic history, study habits, social factors, `G1`, `G2`, `G3`).
+- **Key Features:** study time, absences, failures, family/school support, lifestyle, prior grades.
+- **Target:** Final grade (`G3`).
 
 ---
 
@@ -111,38 +140,24 @@ Data Collection → Data Cleaning → EDA → Feature Engineering
 ```
 
 1. **Data Preprocessing** – Handling missing values, encoding categorical variables, scaling features.
-2. **Exploratory Data Analysis** – Understanding patterns and feature correlations.
-3. **Model Training** – Logistic Regression, Decision Tree, Random Forest, SVM, XGBoost, etc.
-4. **Evaluation** – Accuracy, Precision, Recall, F1-Score, Confusion Matrix, RMSE / R² (for regression).
-5. **Recommendation Engine** – Maps weak areas to suitable topics, courses, and study strategies using content-based filtering.
-6. **Deployment** – Streamlit app for real-time predictions.
+2. **Exploratory Data Analysis** – Understanding patterns and feature correlations (`ml-service/data_analysis.py` → `graphs/`).
+3. **Model Training** – Random Forest (`ml-service/train_model.py`).
+4. **Evaluation** – MAE, RMSE, R², ±1/±2 grade-point accuracy (`ml-service/generate_reports.py` → `ml-service/reports/`).
+5. **Recommendation Engine** – Maps weak areas to suitable topics, courses, and study strategies.
+6. **Deployment** – Flask backend serving the API + multi-role frontend.
 
 ---
 
 ## 🚀 Installation
 
-### 1. Clone the repository
-
 ```bash
-git clone https://github.com/<your-username>/AI-BASED-STUDENT-PERFORMANCE-PREDICTION-AND-PERSONALIZED-LEARNING-RECOMMENDATION.git
+git clone <your-repo>
 cd AI-BASED-STUDENT-PERFORMANCE-PREDICTION-AND-PERSONALIZED-LEARNING-RECOMMENDATION
-```
 
-### 2. Create a virtual environment (recommended)
-
-```bash
 python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # macOS / Linux
 
-# Windows
-venv\Scripts\activate
-
-# macOS / Linux
-source venv/bin/activate
-```
-
-### 3. Install dependencies
-
-```bash
 pip install -r requirements.txt
 ```
 
@@ -150,46 +165,74 @@ pip install -r requirements.txt
 
 ## 💻 Usage
 
-### Run the notebooks
-
 ```bash
-jupyter notebook
+# 1. Train the model (writes models/*.pkl)
+python ml-service/train_model.py
+
+# 2. Generate EDA charts + reports
+python ml-service/data_analysis.py
+python ml-service/generate_reports.py
+
+# 3. CLI prediction with default student profile
+python ml-service/predict.py
+
+# 4. Start the Flask backend (API + frontend on :5000)
+python backend/app.py
+
+# 5. Run the API test suite
+pytest tests/ -v
+
+# 6. DB sanity check
+python backend/check_database.py
 ```
 
-### Train the model
-
-```bash
-python src/train_model.py
-```
-
-### Launch the web app
-
-```bash
-streamlit run app/app.py
-```
-
-Then open **http://localhost:8501** in your browser, enter the student details, and get:
-
-- ✅ Predicted performance
-- ⚠️ Risk level
-- 🎯 Personalized learning recommendations
+Open **http://127.0.0.1:5000** → prediction form · predictions are saved to the DB and listed under `/history`.
 
 ---
 
 ## 📊 Results
 
-| Model               | Accuracy | Precision | Recall | F1-Score |
-| ------------------- | -------- | --------- | ------ | -------- |
-| Logistic Regression | –        | –         | –      | –        |
-| Decision Tree       | –        | –         | –      | –        |
-| Random Forest       | –        | –         | –      | –        |
-| XGBoost             | –        | –         | –      | –        |
+| Model               | MAE | RMSE | R²  |
+| ------------------- | --- | ---- | --- |
+| Random Forest      | 3.08 | 3.87 | 0.27 |
 
-> 🔧 Fill in your actual results after training. Add screenshots of the app and key plots here.
+> R² is modest **by design**: prior-period grades (`G1`/`G2`) are excluded from features to avoid leakage; the model relies on habits / demographics / support.
 
+---
+
+## 🚀 Deployment
+
+The project ships with **production-grade deployment artifacts:
+
+- 🐳 **Docker** — `Dockerfile` + `docker-compose.yml` at the repo root (auto-trains the ML model during build, serves with gunicorn on :8000, built-in healthcheck).
+- 🌐 **Render** — `render.yaml` blueprint (build: train model, start: gunicorn, health check: `/health`).
+- 🟣 **Heroku / Railway** — root `Procfile` (`web: gunicorn --chdir student-performance-system/backend --bind 0.0.0.0:$PORT --workers 2 --timeout 120 wsgi:app`).
+
+### Quick production run (local / any host)
+
+```bash
+pip install -r student-performance-system/requirements.txt
+python student-performance-system/ml-service/train_model.py
+gunicorn --chdir student-performance-system/backend --bind 0.0.0.0:8000 --workers 2 --timeout 120 wsgi:app
+# cross-platform (incl. Windows): cd student-performance-system/backend && waitress-serve --host=0.0.0.0 --port=8000 wsgi:app
+
+# open http://127.0.0.1:8000
+# health: http://127.0.0.1:8000/health
 ```
-![Dashboard Screenshot](assets/dashboard.png)
+
+### Docker
+
+```bash
+docker build -t student-performance .
+docker run -d -p 8000:8000 -e SQLITE_PATH=/app/student-performance-system/student_performance.db student-performance
+
+# or with compose
+docker compose up -d --build
 ```
+
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for the full guide (environment variables, Render / Heroku / Railway steps, troubleshooting, verification).
+
+**Live endpoints:** `GET /health`, `GET /`, `POST /predict`, `GET /history`, `DELETE /history/<id>`, `POST /api/auth/*`.
 
 ---
 
@@ -206,8 +249,6 @@ Then open **http://localhost:8501** in your browser, enter the student details, 
 
 ## 🤝 Contributing
 
-Contributions are welcome!
-
 1. Fork the repository
 2. Create a new branch (`git checkout -b feature/your-feature`)
 3. Commit your changes (`git commit -m "Add your feature"`)
@@ -218,17 +259,8 @@ Contributions are welcome!
 
 ## 📜 License
 
-This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License**.
 
 ---
 
-## 👤 Author
-
-**Your Name**
-- GitHub: [@your-username](https://github.com/your-username)
-- LinkedIn: [Your Name](https://linkedin.com/in/your-profile)
-- Email: your.email@example.com
-
----
-
-⭐ If you found this project useful, please consider giving it a star!
+## ⭐ If you found this project useful, please consider giving it a star!

@@ -1,6 +1,6 @@
 # Model Evaluation — Student Performance (G3)
 
-Generated: 2026-10-10T03:15:05.295423+00:00
+Generated: 2026-10-28T04:41:45.056142+00:00
 
 - Model: `RandomForestRegressor(n_estimators=200, random_state=42)`
 - Features: **39** (one-hot, `drop_first=True`; excluded ['G1', 'G2'])

@@ -1,0 +1,21 @@
+services:
+  web:
+    build: .
+    image: student-performance-prediction
+    container_name: student-performance
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - FLASK_DEBUG=0
+      # SQLite file inside the container (created on first boot, seeded with demo data).
+      - SQLITE_PATH=/app/student-performance-system/student_performance.db
+      # Optional MySQL backend (uncomment + set real credentials when needed):
+      # - DB_ENGINE=mysql
+      # - MYSQL_HOST=<your-mysql-host>
+      # - MYSQL_PORT=3306
+      # - MYSQL_USER=<user>
+      # - MYSQL_PASSWORD=<password>
+      # - MYSQL_DB=student_performance_db

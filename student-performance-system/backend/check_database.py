@@ -1,24 +1,25 @@
+"""Quick sanity check for the predictions table.
 
-from database import get_connection
+Run from the project root (or backend/):
 
-connection = get_connection()
+    python backend/check_database.py
+"""
 
-try:
-    rows = connection.execute(
-        """
-        SELECT id, predicted_grade, performance_level, created_at
-        FROM predictions
-        ORDER BY id DESC
-        LIMIT 5
-        """
-    ).fetchall()
+from database import get_all_predictions
 
-    if rows:
+
+def main():
+    history = get_all_predictions(limit=5)
+
+    if history:
         print("Saved predictions:")
-        for row in rows:
-            print(dict(row))
+        for row in history:
+            print(row)
     else:
         print("No predictions have been saved yet.")
 
-finally:
-    connection.close()
+    return history
+
+
+if __name__ == "__main__":
+    main()

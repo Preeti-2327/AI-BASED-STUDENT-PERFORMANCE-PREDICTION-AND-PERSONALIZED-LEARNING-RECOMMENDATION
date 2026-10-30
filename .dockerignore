@@ -1,0 +1,27 @@
+# Version control
+.git
+.gitignore
+
+# Python
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.db
+**/*.pkl
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.gif
+**/.pytest_cache
+**/.ipynb_checkpoints
+venv/
+.venv/
+
+# Not needed inside the runtime image
+docs/
+ml-service/notebooks/
+ml-service/reports/
+ml-service/models/
+tests/
+*.md
+!README.md

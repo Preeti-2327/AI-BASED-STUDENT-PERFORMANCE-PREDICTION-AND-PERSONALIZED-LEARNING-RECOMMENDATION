@@ -48,7 +48,7 @@
     }
   ],
   "retrained_this_run": false,
-  "generated_at": "2026-10-10T03:15:05.295423+00:00",
+  "generated_at": "2026-10-28T04:41:45.056142+00:00",
   "model": "RandomForestRegressor(n_estimators=200, random_state=42)",
   "schema": "uci",
   "target": "G3",
