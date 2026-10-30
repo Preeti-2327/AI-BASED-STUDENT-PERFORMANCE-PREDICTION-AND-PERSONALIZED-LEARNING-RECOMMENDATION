@@ -203,6 +203,29 @@ gunicorn --chdir student-performance-system/backend --bind 0.0.0.0:$PORT --worke
 
 ---
 
+## 🪂 Fly.io
+
+The repo includes `fly.toml` (Docker-based deployment):
+
+```bash
+# Install flyctl
+curl -L https://fly.io/install.sh | sh
+
+# Login + create app
+fly auth login
+fly apps create student-performance
+
+# Deploy
+fly deploy
+
+# Open
+fly open
+```
+
+The app listens on port 8000 (`[http_service] internal_port = 8000`), health check path defaults to `/health`.
+
+---
+
 ## ✅ Health Check & Verification
 
 After any deployment, verify:
